@@ -1,10 +1,8 @@
 //*****************************************************************************
 //
-//  am_sdk_version.h
-//! @file
+//! @file am_devices_da14581.h
 //!
-//! @brief Defines SDK version.
-//!
+//! @brief Support functions for the Dialog Semiconductor DA14581 BTLE radio.
 //
 //*****************************************************************************
 
@@ -45,8 +43,8 @@
 // This is part of revision 2.5.1 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
-#ifndef AM_SDK_VERSION_H
-#define AM_SDK_VERSION_H
+#ifndef AM_DEVICES_DA14581_H
+#define AM_DEVICES_DA14581_H
 
 #ifdef __cplusplus
 extern "C"
@@ -55,20 +53,55 @@ extern "C"
 
 //*****************************************************************************
 //
-// Macros to define HAL SDK version.
+// Defines
 //
 //*****************************************************************************
-//
-// Define the current HAL version.
-//
-#ifndef AM_HAL_VERSION_MAJ
-#define AM_HAL_VERSION_MAJ      2
-#define AM_HAL_VERSION_MIN      5
-#define AM_HAL_VERSION_REV      1
-#endif // AM_HAL_VERSION_MAJ
+#define AM_DEVICES_DA14581_UART_MODE         (0)
+#define AM_DEVICES_DA14581_SPI_MODE          (1)
 
+#define AM_DEVICES_DA14581_SPI_XPORT_CTS     (0x06)
+#define AM_DEVICES_DA14581_SPI_XPORT_NOT_CTS (0x07)
+
+//*****************************************************************************
+//
+// DA14581 device structure
+//
+//*****************************************************************************
+typedef struct
+{
+    //
+    // MODE UART vs IOM SPI
+    //
+    uint32_t ui32Mode;
+
+    //
+    // IOM Module #
+    //
+    uint32_t ui32IOMModule;
+
+    //
+    // IOM Chip Select NOTE: this driver uses GPIO for chip selects
+    //
+    uint32_t ui32IOMChipSelect;
+
+    //
+    // GPIO # for DA14581 DREADY signal
+    //
+    uint32_t ui32DREADY;
+}
+am_devices_da14581_t;
+
+//*****************************************************************************
+//
+// External function definitions
+//
+//*****************************************************************************
+extern void am_devices_da14581_mac_set(const uint8_t *pui8MacAddress);
+extern bool am_devices_da14581_uart_boot(const uint8_t *pui8BinData,
+                                         uint32_t ui32NumBytes,
+                                         uint32_t ui32UartModule);
 #ifdef __cplusplus
 }
 #endif
 
-#endif // AM_SDK_VERSION_H
+#endif // AM_DEVICES_DA14581_H

@@ -1,10 +1,12 @@
 //*****************************************************************************
 //
-//  am_sdk_version.h
-//! @file
+//! @file am_devices.h
 //!
-//! @brief Defines SDK version.
+//! @brief Includes for all devices.
 //!
+//! @addtogroup devices External Device Control Library
+//! @ingroup devices
+//! @{
 //
 //*****************************************************************************
 
@@ -45,8 +47,9 @@
 // This is part of revision 2.5.1 of the AmbiqSuite Development Package.
 //
 //*****************************************************************************
-#ifndef AM_SDK_VERSION_H
-#define AM_SDK_VERSION_H
+
+#ifndef AM_DEVICES_H
+#define AM_DEVICES_H
 
 #ifdef __cplusplus
 extern "C"
@@ -55,20 +58,24 @@ extern "C"
 
 //*****************************************************************************
 //
-// Macros to define HAL SDK version.
+// All DEVICES includes
 //
 //*****************************************************************************
-//
-// Define the current HAL version.
-//
-#ifndef AM_HAL_VERSION_MAJ
-#define AM_HAL_VERSION_MAJ      2
-#define AM_HAL_VERSION_MIN      5
-#define AM_HAL_VERSION_REV      1
-#endif // AM_HAL_VERSION_MAJ
+#include "am_devices_button.h"
+#include "am_devices_da14581.h"
+#include "am_devices_em9304.h"
+#include "am_devices_led.h"
+#include "am_devices_spiflash.h"
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // AM_SDK_VERSION_H
+#endif // AM_DEVICES_H
+
+//*****************************************************************************
+//
+// End Doxygen group.
+//! @}
+//
+//*****************************************************************************
