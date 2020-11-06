@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>AM_PACKAGE_BGA AM_PART_APOLLO3 keil</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices</IncludePath>
+              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -396,6 +396,21 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>bootloader</GroupName>
+          <Files>
+            <File>
+              <FileName>am_bootloader.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bootloader\am_bootloader.c</FilePath>
+            </File>
+            <File>
+              <FileName>am_multi_boot.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bootloader\am_multi_boot.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>src</GroupName>
           <Files>
             <File>
@@ -403,7 +418,25 @@
               <FileType>1</FileType>
               <FilePath>..\src\main.c</FilePath>
             </File>
+            <File>
+              <FileName>apollo3_init.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\apollo3_init.c</FilePath>
+            </File>
+            <File>
+              <FileName>apollo3_uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\apollo3_uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>apollo3_amotas.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\apollo3_amotas.c</FilePath>
+            </File>
           </Files>
+        </Group>
+        <Group>
+          <GroupName>sensor_hub</GroupName>
         </Group>
         <Group>
           <GroupName>utils</GroupName>
