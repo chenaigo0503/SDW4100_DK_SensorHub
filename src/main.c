@@ -28,6 +28,7 @@
 #include "apollo3_init.h"
 #include "apollo3_uart.h"
 #include "apollo3_amotas.h"
+#include "apollo_delay2run.h"
 
 //*****************************************************************************
 //
@@ -49,11 +50,12 @@ main(void)
     am_bsp_itm_printf_enable();
 #endif
 #endif
+    delay2run_init();
     am_hal_interrupt_master_enable();
 
     // Print the sw infomation.
     PR_INFO("\nApollo 3 Blue for Sensor Hub, SW ver:%02x.%02x.%02x\n", 0, 0, 3);
-    
+
     // init amotas
     dump_ota_status();
     amotas_init();

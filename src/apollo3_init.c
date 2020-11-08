@@ -35,6 +35,13 @@ void apollo3_init(void)
     am_hal_cachectrl_enable();
 
     //
+    // Enable the floating point module, and configure the core for lazy
+    // stacking.
+    //
+    am_hal_sysctrl_fpu_enable();
+    am_hal_sysctrl_fpu_stacking_enable(true);
+
+    //
     // Configure the board for low power operation.
     //
     am_bsp_low_power_init();	
