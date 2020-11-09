@@ -50,7 +50,7 @@ main(void)
     am_bsp_itm_printf_enable();
 #endif
 #endif
-    delay2run_init();
+
     am_hal_interrupt_master_enable();
 
     // Print the sw infomation.

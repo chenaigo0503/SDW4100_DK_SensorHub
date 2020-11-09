@@ -433,6 +433,11 @@
               <FileType>1</FileType>
               <FilePath>..\src\apollo3_amotas.c</FilePath>
             </File>
+            <File>
+              <FileName>apollo3_ios.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\apollo3_ios.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
