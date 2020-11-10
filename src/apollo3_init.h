@@ -16,6 +16,12 @@
 #define APOLLO3_INIT_H
 
 #include "am_mcu_apollo.h"
+//*****************************************************************************
+//
+// Variables used globally
+//
+//*****************************************************************************
+extern void* g_IOMArray[6];
 
 // HW VER v1 Not use SWO
 #define APOLLO3_HUB_VER 1

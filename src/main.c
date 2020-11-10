@@ -31,7 +31,7 @@
 #include "apollo_delay2run.h"
 
 #include "apollo_lsm6dso.h"
-
+#include "apollo_ak09918.h"
 //*****************************************************************************
 //
 // Main
@@ -54,6 +54,7 @@ main(void)
 #endif
     
     lsm6dso_init();
+    ak099xx_init();
 
     am_hal_interrupt_master_enable();
 
