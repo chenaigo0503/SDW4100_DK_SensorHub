@@ -451,6 +451,16 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>devices</GroupName>
+          <Files>
+            <File>
+              <FileName>apollo_lsm6dso.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\devices\apollo_lsm6dso.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>utils</GroupName>
           <Files>
             <File>

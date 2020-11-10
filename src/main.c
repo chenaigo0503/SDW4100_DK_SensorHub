@@ -30,6 +30,8 @@
 #include "apollo3_amotas.h"
 #include "apollo_delay2run.h"
 
+#include "apollo_lsm6dso.h"
+
 //*****************************************************************************
 //
 // Main
@@ -50,6 +52,8 @@ main(void)
     am_bsp_itm_printf_enable();
 #endif
 #endif
+    
+    lsm6dso_init();
 
     am_hal_interrupt_master_enable();
 
