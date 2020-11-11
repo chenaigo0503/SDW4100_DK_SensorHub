@@ -463,6 +463,11 @@
               <FileType>1</FileType>
               <FilePath>..\devices\apollo_ak09918.c</FilePath>
             </File>
+            <File>
+              <FileName>apollo_bmp280.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\devices\apollo_bmp280.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

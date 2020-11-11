@@ -32,6 +32,7 @@
 
 #include "apollo_lsm6dso.h"
 #include "apollo_ak09918.h"
+#include "apollo_bmp280.h"
 //*****************************************************************************
 //
 // Main
@@ -55,6 +56,7 @@ main(void)
     
     lsm6dso_init();
     ak099xx_init();
+    bmp280_init();
 
     am_hal_interrupt_master_enable();
 

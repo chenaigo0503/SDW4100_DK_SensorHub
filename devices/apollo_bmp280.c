@@ -1,11 +1,11 @@
 //*****************************************************************************
 //
-//! @file apollo_ak09918.c
+//! @file apollo_bmp280.c
 //!
-//! @brief Functions for controlling ak09918(compass sensor)
+//! @brief Functions for controlling bmp280(baromater sensor)
 //!
 //! @addtogroup devices External Device Control Library
-//! @addtogroup IIC Device Control for ak09918.
+//! @addtogroup IIC Device Control for bmp280.
 //! @ingroup devices
 //! @{
 //
@@ -23,10 +23,10 @@
 #include "am_bsp.h"
 #include "am_mcu_apollo.h"
 #include "am_util.h"
-#include "apollo_ak09918.h"
+#include "apollo_bmp280.h"
 #include "apollo_tracelog.h"
 
-void* g_AK09918Hanldle;
+void* g_BMP280Hanldle;
 
 /*
  * @brief  Read generic device register (platform dependent)
@@ -38,7 +38,7 @@ void* g_AK09918Hanldle;
  * @param  len       number of consecutive register to read
  *
  */
-void ak099xx_read(uint8_t reg, uint32_t *bufp,
+void bmp280_read(uint8_t reg, uint32_t *bufp,
                              uint32_t len)
 {
     am_hal_iom_transfer_t       Transaction;
@@ -52,9 +52,9 @@ void ak099xx_read(uint8_t reg, uint32_t *bufp,
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
-    Transaction.uPeerInfo.ui32I2CDevAddr = AK09918_ADDR;
+    Transaction.uPeerInfo.ui32I2CDevAddr = BMP280_ADDR;
 
-    am_hal_iom_blocking_transfer(g_AK09918Hanldle, &Transaction);
+    am_hal_iom_blocking_transfer(g_BMP280Hanldle, &Transaction);
 }
 
 /*
@@ -81,7 +81,7 @@ static void platform_write(void *handle, uint8_t reg, uint32_t *bufp,
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
-    Transaction.uPeerInfo.ui32I2CDevAddr = AK09918_ADDR;
+    Transaction.uPeerInfo.ui32I2CDevAddr = BMP280_ADDR;
 
     am_hal_iom_blocking_transfer(handle, &Transaction);
 }
@@ -95,9 +95,9 @@ static void platform_write(void *handle, uint8_t reg, uint32_t *bufp,
 //! @return None.
 //
 //*****************************************************************************
-void ak099xx_init(void)
+void bmp280_init(void)
 {
-    uint32_t ak099ID = 0;
+    uint32_t BMP280Id = 0;
     am_hal_iom_config_t m_sIOMI2cConfig =
     {
         .eInterfaceMode = AM_HAL_IOM_I2C_MODE,
@@ -105,36 +105,35 @@ void ak099xx_init(void)
     };
 
     // init i2c
-    if(g_IOMArray[AK09918_IOM_MODULE] == NULL)
+    if(g_IOMArray[BMP280_IOM_MODULE] == NULL)
     {
-        am_hal_iom_initialize(AK09918_IOM_MODULE,
-                                &g_IOMArray[AK09918_IOM_MODULE]);
-        g_AK09918Hanldle = g_IOMArray[AK09918_IOM_MODULE];
-        am_hal_iom_power_ctrl(g_AK09918Hanldle, AM_HAL_SYSCTRL_WAKE, false);
+        am_hal_iom_initialize(BMP280_IOM_MODULE,
+                                &g_IOMArray[BMP280_IOM_MODULE]);
+        g_BMP280Hanldle = g_IOMArray[BMP280_IOM_MODULE];
+        am_hal_iom_power_ctrl(g_BMP280Hanldle, AM_HAL_SYSCTRL_WAKE, false);
 
         // Set the required configuration settings for the IOM.
-        am_hal_iom_configure(g_AK09918Hanldle, &m_sIOMI2cConfig);
+        am_hal_iom_configure(g_BMP280Hanldle, &m_sIOMI2cConfig);
 
         // Configure the IOM pins.
-        am_bsp_iom_pins_enable(AK09918_IOM_MODULE, AM_HAL_IOM_I2C_MODE);
+        am_bsp_iom_pins_enable(BMP280_IOM_MODULE, AM_HAL_IOM_I2C_MODE);
     }
     else
     {
-        g_AK09918Hanldle = g_IOMArray[AK09918_IOM_MODULE];
+        g_BMP280Hanldle = g_IOMArray[BMP280_IOM_MODULE];
     }
 
     // Enable the IOM.
-    am_hal_iom_enable(g_AK09918Hanldle);
-
-    ak099xx_read(AK099XX_REG_WIA1, &ak099ID, 2);
-
-    if(LSM6DSO_WHO_AM_I != (uint16_t)ak099ID)
+    am_hal_iom_enable(g_BMP280Hanldle);
+    
+    bmp280_read(BMP280_CHIP_ID_ADDR, &BMP280Id, 1);
+    if(BMP280_CHIP_ID3 != (uint8_t)BMP280Id)
     {
-        PR_ERR("ERROR: ak09918 get ID: 0x%04x error.\n", ak099ID);
+        PR_ERR("ERROR: BMP280 get ID: 0x%02x error.\n", (uint8_t)BMP280Id);
     }
     else
     {
-        PR_INFO("ak09918 get ID success.\n");
+        PR_INFO("BMP280 get ID success.\n");
     }
 }
 
