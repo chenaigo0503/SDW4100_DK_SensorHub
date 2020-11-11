@@ -468,6 +468,11 @@
               <FileType>1</FileType>
               <FilePath>..\devices\apollo_bmp280.c</FilePath>
             </File>
+            <File>
+              <FileName>apollo_pah8011.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\devices\apollo_pah8011.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
