@@ -131,13 +131,14 @@ void ios_init(void)
 // Inform host of new data available to read
 void inform_host(void)
 {
+    uint32_t ui32Arg = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
     // Update FIFOCTR for host to read
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
     // Interrupt the host
 #if (APOLLO3_HUB_VER == 1)
     am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_SET);
     delay_to_run(50, pulldown_iosint, NULL);
-#else
+//#else
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_HOST_INTSET, &ui32Arg);
 #endif
 }
@@ -151,6 +152,7 @@ void am_ioslave_ios_isr(void)
 {
     uint32_t ui32Status;
     uint8_t  *pui8Packet;
+    uint16_t i;
 
     // Check to see what caused this interrupt, then clear the bit from the
     // interrupt register.
@@ -185,5 +187,13 @@ void am_ioslave_ios_isr(void)
         // Set up a pointer for writing 32-bit aligned packets through
         // the IO slave interface.
         pui8Packet = (uint8_t*)am_hal_ios_pui8LRAM;
+        PR_ERR("IO Slave recive:");
+        for(i=0;i<1023;i++)
+        {
+            if(!(i%16))
+                PR_ERR("\n");
+            PR_ERR("%02x ", pui8Packet[i]);
+        }
+        PR_ERR("\nEnd\n");
     }
 }

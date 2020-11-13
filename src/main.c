@@ -28,6 +28,7 @@
 #include "apollo3_init.h"
 #include "apollo3_uart.h"
 #include "apollo3_amotas.h"
+#include "apollo3_ios.h"
 #include "apollo_delay2run.h"
 
 #include "apollo_lsm6dso.h"
@@ -55,6 +56,7 @@ main(void)
 #endif
 #endif
     
+    ios_init();
     lsm6dso_init();
     ak099xx_init();
     bmp280_init();

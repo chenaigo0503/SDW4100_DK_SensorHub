@@ -32,11 +32,14 @@
 #define APOLLO3_IOSINT_PIN    28
 #define APOLLO3_IOS_TXBUF_MAX 1023
 
+#define AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK  1
+
 //*****************************************************************************
 //
 // IOS handle.
 //
 //*****************************************************************************
+void ios_init(void);
 
 
 

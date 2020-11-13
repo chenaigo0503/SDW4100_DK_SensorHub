@@ -28,5 +28,6 @@ extern void* g_IOMArray[6];
 
 // apollo3_init
 void apollo3_init(void);
+void inform_host(void);
 
 #endif // APOLLO3_INIT_H
