@@ -30,11 +30,20 @@
 #include "apollo3_amotas.h"
 #include "apollo3_ios.h"
 #include "apollo_delay2run.h"
+#include "apollo_message.h"
 
 #include "apollo_lsm6dso.h"
 #include "apollo_ak09918.h"
 #include "apollo_bmp280.h"
 #include "apollo_pah8011.h"
+
+extern volatile msg_link msg_link_quene;
+extern uint8_t amotaStart;
+
+extern uint8_t g_UARTRxBuf1[128];
+extern uint8_t g_UARTRxBuf1Sta; // 0 0-0x63 0x64
+extern uint8_t g_UARTRxBuf2[128];
+extern uint8_t g_UARTRxBuf2Sta;
 //*****************************************************************************
 //
 // Main
@@ -55,7 +64,7 @@ main(void)
     am_bsp_itm_printf_enable();
 #endif
 #endif
-    
+
     ios_init();
     lsm6dso_init();
     ak099xx_init();
@@ -65,7 +74,7 @@ main(void)
     am_hal_interrupt_master_enable();
 
     // Print the sw infomation.
-    PR_INFO("\nApollo 3 Blue for Sensor Hub, SW ver:%02x.%02x.%02x\n", 0, 0, 3);
+    PR_INFO("\nApollo 3 Blue for Sensor Hub, SW ver:%02x.%02x.%02x\n", 0, 0, 6);
 
     // init amotas
     dump_ota_status();
@@ -75,9 +84,27 @@ main(void)
     {
         static uint32_t read_data = 0;
         static uint16_t data_len;
-        if(g_ui32UARTRxIndex == 16712)
+        
+        if(g_UARTRxBuf1Sta == 0x64)
         {
-            PR_ERR("recive all package\n");
+            distribute_pack(g_UARTRxBuf1Sta, g_UARTRxBuf1, 0);
+            g_UARTRxBuf1Sta = 0;
+        }
+        if(g_UARTRxBuf2Sta == 0x64)
+        {
+            distribute_pack(g_UARTRxBuf2Sta, g_UARTRxBuf2, 0);
+            g_UARTRxBuf2Sta = 0;
+        }
+        if(g_ui32UARTRxIndex == 28096)
+        {
+            // UART recive all update file
+            PR_ERR("recive all package:%x %x\n", g_UARTRxBuf1Sta, g_UARTRxBuf2Sta);
+            if(g_UARTRxBuf1Sta)
+                distribute_pack(g_UARTRxBuf1Sta, g_UARTRxBuf1, 1);
+            if(g_UARTRxBuf2Sta)
+                distribute_pack(g_UARTRxBuf2Sta, g_UARTRxBuf2, 1);
+            
+            while(1);
             amotas_cback(1, 0x30, g_UARTRxBlock);
             read_data = 0x30;
             g_ui32UARTRxIndex -= read_data;
@@ -91,10 +118,42 @@ main(void)
                 read_data += data_len;
                 g_ui32UARTRxIndex -= data_len;
             }
-            
+
             amotas_cback(3, 0, NULL);
             amotas_cback(4, 0, NULL);
             while(1);
+        }
+        else if (msg_link_quene.front != NULL)
+        {
+            PR_DBG("Recive msg queue mid: %d\n", msg_link_quene.front->mid);
+            switch(msg_link_quene.front->mid)
+            {
+                case APOLLO_FW_UPDATA_CMD:
+                    amotas_init();
+                    send_resp_msg(msg_link_quene.front->mid);
+                    inform_host();
+                    break;
+
+                case APOLLO_FW_UPDATA_DATA:
+                    if (amotaStart)
+                    {
+                    }
+                    amotas_init();
+                    send_resp_msg(msg_link_quene.front->mid);
+                    inform_host();
+                    break;
+
+                default:
+                    PR_ERR("There is no useful mid: 0x%02x\n", msg_link_quene.front->mid);
+                    break;
+
+                /*case APOLLO_FW_UPDATA_CMD:
+                    amotas_init();
+                    send_resp_msg(msg_link_quene.front->mid);
+                    inform_host();
+                    break;*/
+            }
+            msg_dequene();
         }
     }
 

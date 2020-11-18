@@ -138,7 +138,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>AM_PACKAGE_BGA AM_PART_APOLLO3 keil</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader</IncludePath>
+              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader;..\third_party\custom\crc8</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -448,6 +448,11 @@
               <FileType>1</FileType>
               <FilePath>..\sensorhub\apollo_delay2run.c</FilePath>
             </File>
+            <File>
+              <FileName>apollo_message.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\sensorhub\apollo_message.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -472,6 +477,16 @@
               <FileName>apollo_pah8011.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\devices\apollo_pah8011.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>third_party</GroupName>
+          <Files>
+            <File>
+              <FileName>crc8.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\third_party\custom\crc8\crc8.c</FilePath>
             </File>
           </Files>
         </Group>

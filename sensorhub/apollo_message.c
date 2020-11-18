@@ -17,7 +17,7 @@
 #include "am_mcu_apollo.h"
 #include "am_util.h"
 
-static void *g_pIOSHandle;
+extern void *g_pIOSHandle;
 static uint8_t msg_buf[APOLLO_MSG_MAX];
 static uint8_t* p_msg_buf = msg_buf;
 
@@ -71,32 +71,37 @@ int unpack_data(uint8_t* message_pack)
 
     ap_msg = msg_malloc(sizeof(apollo_msg));
 
-    if(message_pack[0] == APOLLO_MESSAGE_HEAD && message_pack[1] ==APOLLO_HUB_PID)
+    if(message_pack[0] != APOLLO_MESSAGE_HEAD || message_pack[1] != APOLLO_HUB_PID)
     {
-        ap_msg->mid = message_pack[2];
-        ap_msg->len = *(uint16_t*)(&message_pack[3]);
-
-        if(ap_msg->len != apollo_message_len[ap_msg->mid])
-        {
-            return -1;
-        }
-    } else {
+        // Does not conform to transport protocol
         return -1;
     }
 
-    if(message_pack[ap_msg->len + 5] == CalcCrc8(message_pack, ap_msg->len + 5))
+    ap_msg->mid = message_pack[2];
+    ap_msg->len = message_pack[3];
+    
+    // mid = APOLLO_FW_UPDATA_DATA, unfixed length.
+    if(ap_msg->mid != APOLLO_FW_UPDATA_DATA &&
+        ap_msg->len != apollo_message_len[ap_msg->mid])
     {
-        ap_msg->data = msg_malloc(ap_msg->len);
-        if(ap_msg->data == NULL)
-            return -1;
-
-        memcpy(ap_msg->data, &message_pack[5], ap_msg->len);
-        msg_enquene(ap_msg);
-
-        return 0;
-    } else {
-        return -1;
+        // Does not match the transmission packet length
+        return -2;
     }
+
+    if(message_pack[ap_msg->len + 4] != CalcCrc8(message_pack, ap_msg->len + 4))
+    {
+        // CRC 8 check failed
+        return -3;
+    }
+
+    ap_msg->data = msg_malloc(ap_msg->len);
+    if(ap_msg->data == NULL)
+        return -1;
+
+    memcpy(ap_msg->data, &message_pack[5], ap_msg->len);
+    msg_enquene(ap_msg);
+
+    return 0;
 }
 
 int sensor_event_enquene(uint8_t mid, uint8_t* sns_data, uint16_t sns_len)
@@ -109,17 +114,20 @@ int sensor_event_enquene(uint8_t mid, uint8_t* sns_data, uint16_t sns_len)
     ap_msg->data = msg_malloc(ap_msg->len);
     if(ap_msg->data == NULL)
         return -1;
-    
+
     memcpy(ap_msg->data, sns_data, ap_msg->len);
     msg_enquene(ap_msg);
-    
+
     return 0;
 }
 
 uint8_t send_resp_msg(uint8_t msg_id)
 {
-    uint8_t send_msg[6] = {0xAA, 0x01};
+    uint8_t send_msg[5];
     uint32_t num_write;
+    
+    send_msg[0] = 0xAA;
+    send_msg[1] = APOLLO_HUB_PID;
     if(msg_id == APOLLO_GET_VERSION_CMD)
     {
         uint8_t ver_msg[9] = {0xAA, 0x01};
@@ -136,8 +144,6 @@ uint8_t send_resp_msg(uint8_t msg_id)
         return 0;
     }
 
-    send_msg[3] = 0;
-    send_msg[4] = 0;
     if(msg_id < 0x40)
     {
         send_msg[2] = msg_id + 1;
@@ -146,11 +152,12 @@ uint8_t send_resp_msg(uint8_t msg_id)
     {
         send_msg[2] = msg_id + 0x40;
     }
+    send_msg[3] = 0;
 
-    send_msg[5] = CalcCrc8(send_msg, sizeof(send_msg) - 1);
+    send_msg[4] = CalcCrc8(send_msg, sizeof(send_msg) - 1);
     am_hal_ios_fifo_write(g_pIOSHandle, send_msg, sizeof(send_msg), &num_write);
     if(sizeof(send_msg) < num_write)
-        return -1;
+        return 1;
 
     return 0;
 }

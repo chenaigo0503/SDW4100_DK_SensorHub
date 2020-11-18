@@ -13,17 +13,21 @@
 #ifndef APOLLO_MESSAGE_H
 #define APOLLO_MESSAGE_H
 
-#define APOLLO_MSG_MAX             512
+#define APOLLO_MSG_MAX             1024
 
 #define APOLLO_MESSAGE_HEAD        0xaa
 #define APOLLO_HUB_PID             0x01
 
-#define APOLLO_HEART_BEAT_CMD      0x01
-#define APOLLO_HEART_BEAT_RESP     0x02
-#define APOLLO_GET_VERSION_CMD     0x03
-#define APOLLO_GET_VERSION_RESP    0x04
-#define APOLLO_FW_UPDATA_CMD       0x05
-#define APOLLO_FW_UPDATA_RESP      0x06
+#define APOLLO_HEART_BEAT_CMD      0x00
+#define APOLLO_HEART_BEAT_RESP     0x01
+#define APOLLO_GET_VERSION_CMD     0x02
+#define APOLLO_GET_VERSION_RESP    0x03
+#define APOLLO_FW_UPDATA_CMD       0x04
+#define APOLLO_FW_UPDATA_RESP      0x05
+#define APOLLO_FW_UPDATA_DATA      0x06
+#define APOLLO_FW_DATA_RESP        0x07
+#define APOLLO_FW_DATAEND_CMD      0x08
+#define APOLLO_FW_DATAEND_RESP     0x09
 
 #define APOLLO_SET_DATE_CMD        0x10
 #define APOLLO_SET_DATE_RESP       0x11
@@ -48,7 +52,7 @@
 
 typedef struct apollo_msg{
     uint8_t mid;
-    uint16_t len;
+    uint8_t len;
     uint8_t* data;
     struct apollo_msg* next;
 }apollo_msg;
@@ -60,7 +64,7 @@ typedef struct msg_link{
 
 static uint8_t apollo_message_len[256] = {
 //  x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 xA xB xC xD xE xF
-    0,  0,  0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //0x
+    0,  0,  0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //0x
     4,  0,  3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //1x
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //2x
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //3x
@@ -82,5 +86,6 @@ static uint8_t apollo_message_len[256] = {
 int unpack_data(uint8_t* message_pack);
 uint8_t send_resp_msg(uint8_t msg_id);
 int sensor_event_enquene(uint8_t mid, uint8_t* sns_data, uint16_t sns_len);
+void msg_dequene(void);
 
 #endif // APOLLO_MESSAGE_H

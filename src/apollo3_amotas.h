@@ -43,6 +43,8 @@
 #define AMOTA_PACKET_SIZE           (512 + 16)    // Bytes
 
 #define AMOTA_FW_HEADER_SIZE        44
+#define AMOTA_FW_HEADER_PACKAGE     0x30
+#define AMOTA_FW_DATA_PACKAGE       0x200
 
 #define AMOTA_FW_STORAGE_INTERNAL   0
 #define AMOTA_FW_STORAGE_EXTERNAL   1
@@ -55,5 +57,6 @@
 void amotas_init(void);
 void dump_ota_status(void);
 void amotas_cback(uint8_t cmd, uint16_t len, uint8_t *buf);
+void distribute_pack(uint8_t len, uint8_t *buf, uint8_t isEndPack);
 
 #endif // APOLLO3_AMOTAS_H

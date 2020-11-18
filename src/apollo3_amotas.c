@@ -29,6 +29,7 @@
 #define FLASH_OPERATE(pFlash, func) ((pFlash)->func ? (pFlash)->func() : 0)
 
 static am_multiboot_flash_info_t *g_pFlash = &g_intFlash;
+uint8_t amotaStart = 0;
 
 // Data structure for flash operation
 typedef struct
@@ -262,7 +263,6 @@ static bool amotas_write2flash(uint16_t len, uint8_t *buf, uint32_t addr, bool l
             ui16Bytes2write = ui16BytesRemaining;
         }
         // move data into buffer
-        PR_ERR("TC move to amotasFlash %d\n", ui16Bytes2write);
         for ( i = 0; i < ui16Bytes2write; i++ )
         {
             // avoid using memcpy
@@ -285,7 +285,7 @@ static bool amotas_write2flash(uint16_t len, uint8_t *buf, uint32_t addr, bool l
                 break;
             }
 
-            PR_ERR("Flash write succeeded to address 0x%x. length %d\n", ui32TargetAddress, amotasFlash.bufferIndex);
+            PR_INFO("Flash write succeeded to address 0x%x. length %d\n", ui32TargetAddress, amotasFlash.bufferIndex);
             ui8PageCount++;
             amotasFlash.bufferIndex = 0;
             bResult = true;
@@ -375,8 +375,7 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
     bool resumeTransfer = false;
     bool bResult = false;
     uint8_t data[4] = {0};
-
-    PR_ERR("received packet cmd = 0x%x, len = 0x%x\n", cmd, len);
+    
     switch(cmd)
     {
         case AMOTA_CMD_FW_HEADER:
@@ -396,7 +395,7 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
             BYTES_TO_UINT32(amotasCb.fwHeader.fwDataType, buf + 36);
             BYTES_TO_UINT32(amotasCb.fwHeader.storageType, buf + 40);
             
-            PR_INFO("OTA process start from beginning\n");
+            PR_DBG("OTA process start from beginning\n");
             amotasFlash.bufferIndex = 0;
             bResult = amotas_set_fw_addr();
 
@@ -489,6 +488,7 @@ void amotas_init(void)
     memset(&amotasCb, 0, sizeof(amotasCb));
     amotasCb.state = AMOTA_STATE_INIT;
     amotas_init_ota();
+    amotaStart = 1;
 }
 
 static char *otaStatusMessage[] =
@@ -546,3 +546,58 @@ void amotas_cback(uint8_t cmd, uint16_t len, uint8_t *buf)
     amotas_packet_handler((eAmotaCommand)cmd, len, buf);
 }
 
+void distribute_pack(uint8_t len, uint8_t *buf, uint8_t isEndPack)
+{
+    static uint8_t firstPack = 0;
+    static uint16_t otaBufLen = 0;
+    static uint8_t packBuf[0x200] = {0};
+    
+    while(len)
+    {
+        if (firstPack)
+        {
+            // Data packet
+            if ((len + otaBufLen) >= AMOTA_FW_DATA_PACKAGE)
+            {
+                memcpy(&packBuf[otaBufLen], buf, AMOTA_FW_DATA_PACKAGE - otaBufLen);
+                amotas_packet_handler(AMOTA_CMD_FW_DATA, AMOTA_FW_DATA_PACKAGE, packBuf);
+                otaBufLen = 0;
+                len -= (AMOTA_FW_DATA_PACKAGE - otaBufLen);
+                buf += (AMOTA_FW_DATA_PACKAGE - otaBufLen);
+            }
+            else
+            {
+                memcpy(&packBuf[otaBufLen], buf, len);
+                otaBufLen += len;
+                len = 0;
+            }
+        }
+        else
+        {
+            if((len + otaBufLen) >= AMOTA_FW_HEADER_PACKAGE)
+            {
+                memcpy(&packBuf[otaBufLen], buf, AMOTA_FW_HEADER_PACKAGE - otaBufLen);
+                amotas_packet_handler(AMOTA_CMD_FW_HEADER, AMOTA_FW_HEADER_PACKAGE, packBuf);
+                firstPack = 1;
+                otaBufLen = 0;
+                len -= (AMOTA_FW_HEADER_PACKAGE - otaBufLen);
+                buf += (AMOTA_FW_HEADER_PACKAGE - otaBufLen);
+            }
+            else
+            {
+                memcpy(&packBuf[otaBufLen], buf, len);
+                otaBufLen += len;
+                len = 0;
+            }
+        }
+    }
+    
+    if(isEndPack)
+    {
+        if (otaBufLen)
+            amotas_packet_handler(AMOTA_CMD_FW_DATA, otaBufLen, packBuf);
+        
+        amotas_packet_handler(AMOTA_CMD_FW_VERIFY, 0, NULL);
+        amotas_packet_handler(AMOTA_CMD_FW_RESET, 0, NULL);
+    }
+}

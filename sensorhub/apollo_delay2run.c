@@ -51,7 +51,7 @@ static void delay2run_handle(void)
         if (d2r_array[i].waitNum)
             d2r_array[i].waitNum--;
 
-        if(d2r_array[i].waitNum == 0 && d2r_array[i].d2r_fun != NULL)
+        if (d2r_array[i].waitNum == 0 && d2r_array[i].d2r_fun != NULL)
         {
             d2r_array[i].d2r_fun(d2r_array[i].inPara);
             d2r_array[i].d2r_fun = NULL;
