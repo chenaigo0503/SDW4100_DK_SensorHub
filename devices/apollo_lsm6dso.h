@@ -41,6 +41,22 @@ extern "C"
 // Register offset address
 #define LSM6DSO_OFFSET_ID  0x0FU
 
+#define LSM6DSO_CTRL3_C    0x12U
+typedef struct {
+  uint8_t sw_reset                 : 1;
+  uint8_t not_used_01              : 1;
+  uint8_t if_inc                   : 1;
+  uint8_t sim                      : 1;
+  uint8_t pp_od                    : 1;
+  uint8_t h_lactive                : 1;
+  uint8_t bdu                      : 1;
+  uint8_t boot                     : 1;
+} lsm6dso_ctrl3_c_t;
+
+#define PROPERTY_DISABLE                (0U)
+#define PROPERTY_ENABLE                 (1U)
+
+
 typedef void (*stmdev_write_ptr) (void *, uint8_t, uint32_t*, uint32_t);
 typedef void (*stmdev_read_ptr) (void *, uint8_t, uint32_t*, uint32_t);
 

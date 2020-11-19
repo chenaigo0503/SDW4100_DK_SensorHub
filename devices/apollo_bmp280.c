@@ -129,11 +129,11 @@ void bmp280_init(void)
     bmp280_read(BMP280_CHIP_ID_ADDR, &BMP280Id, 1);
     if(BMP280_CHIP_ID3 != (uint8_t)BMP280Id)
     {
-        PR_ERR("ERROR: BMP280 get ID: 0x%02x error.\n", (uint8_t)BMP280Id);
+        PR_ERR("ERROR: BMP280 get ID: 0x%02x error.", (uint8_t)BMP280Id);
     }
     else
     {
-        PR_INFO("BMP280 get ID success.\n");
+        PR_INFO("BMP280 get ID success.");
     }
 }
 

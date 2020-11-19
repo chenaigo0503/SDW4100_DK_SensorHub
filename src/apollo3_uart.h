@@ -26,7 +26,6 @@
 //*****************************************************************************
 extern void *phUART;
 extern volatile uint32_t g_ui32UARTRxIndex;
-extern uint8_t g_UARTRxBlock[20*1024];
 
 extern volatile uint32_t ui32LastError;
 

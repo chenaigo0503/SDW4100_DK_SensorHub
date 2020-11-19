@@ -44,6 +44,7 @@ extern uint8_t g_UARTRxBuf1[128];
 extern uint8_t g_UARTRxBuf1Sta; // 0 0-0x63 0x64
 extern uint8_t g_UARTRxBuf2[128];
 extern uint8_t g_UARTRxBuf2Sta;
+
 //*****************************************************************************
 //
 // Main
@@ -74,17 +75,19 @@ main(void)
     am_hal_interrupt_master_enable();
 
     // Print the sw infomation.
-    PR_INFO("\nApollo 3 Blue for Sensor Hub, SW ver:%02x.%02x.%02x\n", 0, 0, 6);
+    END_LINE;
+    PR_INFO("Apollo 3 Blue for Sensor Hub, SW ver:%02x.%02x.%02x", 0, 0, 10);
 
     // init amotas
     dump_ota_status();
-    amotas_init();
 
     while(1)
     {
         static uint32_t read_data = 0;
         static uint16_t data_len;
         
+/*********************************************************************
+        // OTA testing through UART
         if(g_UARTRxBuf1Sta == 0x64)
         {
             distribute_pack(g_UARTRxBuf1Sta, g_UARTRxBuf1, 0);
@@ -98,59 +101,42 @@ main(void)
         if(g_ui32UARTRxIndex == 28096)
         {
             // UART recive all update file
-            PR_ERR("recive all package:%x %x\n", g_UARTRxBuf1Sta, g_UARTRxBuf2Sta);
+            PR_ERR("recive all package:%x %x", g_UARTRxBuf1Sta, g_UARTRxBuf2Sta);
             if(g_UARTRxBuf1Sta)
                 distribute_pack(g_UARTRxBuf1Sta, g_UARTRxBuf1, 1);
             if(g_UARTRxBuf2Sta)
                 distribute_pack(g_UARTRxBuf2Sta, g_UARTRxBuf2, 1);
             
             while(1);
-            amotas_cback(1, 0x30, g_UARTRxBlock);
-            read_data = 0x30;
-            g_ui32UARTRxIndex -= read_data;
-            while(g_ui32UARTRxIndex)
-            {
-                if(g_ui32UARTRxIndex > 0x200)
-                    data_len = 0x200;
-                else
-                    data_len = g_ui32UARTRxIndex;
-                amotas_cback(2, data_len, &g_UARTRxBlock[read_data]);
-                read_data += data_len;
-                g_ui32UARTRxIndex -= data_len;
-            }
-
-            amotas_cback(3, 0, NULL);
-            amotas_cback(4, 0, NULL);
-            while(1);
         }
-        else if (msg_link_quene.front != NULL)
+***********************************************************************************/
+        if (msg_link_quene.front != NULL)
         {
-            PR_DBG("Recive msg queue mid: %d\n", msg_link_quene.front->mid);
+            PR_DBG("Recive msg queue mid: %d", msg_link_quene.front->mid);
             switch(msg_link_quene.front->mid)
             {
                 case APOLLO_FW_UPDATA_CMD:
                     amotas_init();
                     send_resp_msg(msg_link_quene.front->mid);
-                    inform_host();
                     break;
 
                 case APOLLO_FW_UPDATA_DATA:
-                    if (amotaStart)
-                    {
-                    }
-                    amotas_init();
+                    distribute_pack(msg_link_quene.front->len, msg_link_quene.front->data, 0);
                     send_resp_msg(msg_link_quene.front->mid);
-                    inform_host();
+                    break;
+
+                case APOLLO_FW_DATAEND_CMD:
+                    distribute_pack(0, NULL, 1);
+                    send_resp_msg(msg_link_quene.front->mid);
                     break;
 
                 default:
-                    PR_ERR("There is no useful mid: 0x%02x\n", msg_link_quene.front->mid);
+                    PR_ERR("There is no useful mid: 0x%02x", msg_link_quene.front->mid);
                     break;
 
                 /*case APOLLO_FW_UPDATA_CMD:
                     amotas_init();
                     send_resp_msg(msg_link_quene.front->mid);
-                    inform_host();
                     break;*/
             }
             msg_dequene();

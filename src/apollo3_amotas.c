@@ -157,7 +157,7 @@ static bool amotas_set_fw_addr(void)
         // Check to make sure the incoming image will fit in the space allocated for OTA
         if (amotasCb.fwHeader.fwLength > maxSize)
         {
-            PR_INFO("not enough OTA space allocated = %d bytes, Desired = %d bytes\n",
+            PR_INFO("not enough OTA space allocated = %d bytes, Desired = %d bytes",
                 maxSize, amotasCb.fwHeader.fwLength);
             return false;
         }
@@ -219,7 +219,7 @@ static int verify_flash_content(uint32_t flashAddr, uint32_t *pSram, uint32_t le
         if ( ret != 0 )
         {
             // there is write failure happened.
-            PR_INFO("flash write verify failed. address 0x%x. length %d\n", flashAddr, len);
+            PR_INFO("flash write verify failed. address 0x%x. length %d", flashAddr, len);
             break;
         }
         offset += tmpSize;
@@ -253,7 +253,7 @@ static bool amotas_write2flash(uint16_t len, uint8_t *buf, uint32_t addr, bool l
         // application is trying to write to wrong address
         return false;
     }
-
+    
     FLASH_OPERATE(g_pFlash, flash_enable);
     while (ui16BytesRemaining)
     {
@@ -285,7 +285,7 @@ static bool amotas_write2flash(uint16_t len, uint8_t *buf, uint32_t addr, bool l
                 break;
             }
 
-            PR_INFO("Flash write succeeded to address 0x%x. length %d\n", ui32TargetAddress, amotasFlash.bufferIndex);
+            PR_INFO("Flash write succeeded to address 0x%x. length %d", ui32TargetAddress, amotasFlash.bufferIndex);
             ui8PageCount++;
             amotasFlash.bufferIndex = 0;
             bResult = true;
@@ -347,7 +347,7 @@ static bool amotas_verify_firmware_crc(void)
 static void amotas_update_ota(void)
 {
     uint8_t  magic = *((uint8_t *)(amotasCb.newFwFlashInfo.addr + 3));
-    PR_ERR("amotas_update_ota: magic: %d, addr: %x\n", magic, amotasCb.newFwFlashInfo.addr);
+    PR_ERR("amotas_update_ota: magic: %d, addr: %x", magic, amotasCb.newFwFlashInfo.addr);
 
     // Set OTAPOINTER
     am_hal_ota_add(AM_HAL_FLASH_PROGRAM_KEY, magic, (uint32_t *)amotasCb.newFwFlashInfo.addr);
@@ -395,12 +395,13 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
             BYTES_TO_UINT32(amotasCb.fwHeader.fwDataType, buf + 36);
             BYTES_TO_UINT32(amotasCb.fwHeader.storageType, buf + 40);
             
-            PR_DBG("OTA process start from beginning\n");
+            PR_DBG("OTA process start from beginning");
             amotasFlash.bufferIndex = 0;
             bResult = amotas_set_fw_addr();
 
             if ( bResult == false )
             {
+                PR_DBG("Header FALSE");
                 // amotas_reply_to_client(cmd, AMOTA_STATUS_INSUFFICIENT_FLASH, NULL, 0);
                 amotasCb.state = AMOTA_STATE_INIT;
                 return;
@@ -419,6 +420,7 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
         
             if ( bResult == false )
             {
+                PR_DBG("Data FALSE");
                 data[0] = ((amotasCb.newFwFlashInfo.offset) & 0xff);
                 data[1] = ((amotasCb.newFwFlashInfo.offset >> 8) & 0xff);
                 data[2] = ((amotasCb.newFwFlashInfo.offset >> 16) & 0xff);
@@ -440,7 +442,7 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
         case AMOTA_CMD_FW_VERIFY:
             if (amotas_verify_firmware_crc())
             {
-                PR_INFO("crc verify success\n");
+                PR_INFO("crc verify success");
 
                 // amotas_reply_to_client(cmd, AMOTA_STATUS_SUCCESS, NULL, 0);
 
@@ -451,7 +453,7 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
             }
             else
             {
-                PR_INFO("crc verify failed\n");
+                PR_INFO("crc verify failed");
                 // amotas_reply_to_client(cmd, AMOTA_STATUS_CRC_ERROR, NULL, 0);
             }
             FLASH_OPERATE(g_pFlash, flash_deinit);
@@ -460,7 +462,7 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
             break;
 
         case AMOTA_CMD_FW_RESET:
-            PR_INFO("Apollo will reset in 500ms.\n");
+            PR_INFO("Apollo will reset in 500ms.");
             am_hal_reset_control(AM_HAL_RESET_CONTROL_SWPOI, 0);
             // amotas_reply_to_client(cmd, AMOTA_STATUS_SUCCESS, NULL, 0);
 
@@ -518,7 +520,7 @@ void dump_ota_status(void)
     }
     if (pOtaDesc[i] == 0xFFFFFFFF)
     {
-        PR_INFO("Valid Previous OTA state,i=%d\n", i);
+        PR_INFO("Valid Previous OTA state,i=%d", i);
         // It seems in last boot this was used as OTA descriptor
         // Dump previous OTA information
         am_hal_ota_status_t otaStatus[AM_HAL_SECURE_OTA_MAX_OTA];
@@ -530,14 +532,14 @@ void dump_ota_status(void)
                 break;
             }
             {
-                PR_INFO("Previous OTA: Blob Addr: 0x%x - Result %s\n",
+                PR_INFO("Previous OTA: Blob Addr: 0x%x - Result %s",
                                      otaStatus[i].pImage, otaStatusMessage[otaStatus[i].status]);
             }
         }
     }
     else
     {
-        PR_ERR("No Previous OTA state\n");
+        PR_ERR("No Previous OTA state");
     }
 }
 
@@ -561,9 +563,9 @@ void distribute_pack(uint8_t len, uint8_t *buf, uint8_t isEndPack)
             {
                 memcpy(&packBuf[otaBufLen], buf, AMOTA_FW_DATA_PACKAGE - otaBufLen);
                 amotas_packet_handler(AMOTA_CMD_FW_DATA, AMOTA_FW_DATA_PACKAGE, packBuf);
-                otaBufLen = 0;
                 len -= (AMOTA_FW_DATA_PACKAGE - otaBufLen);
                 buf += (AMOTA_FW_DATA_PACKAGE - otaBufLen);
+                otaBufLen = 0;
             }
             else
             {
@@ -579,9 +581,9 @@ void distribute_pack(uint8_t len, uint8_t *buf, uint8_t isEndPack)
                 memcpy(&packBuf[otaBufLen], buf, AMOTA_FW_HEADER_PACKAGE - otaBufLen);
                 amotas_packet_handler(AMOTA_CMD_FW_HEADER, AMOTA_FW_HEADER_PACKAGE, packBuf);
                 firstPack = 1;
-                otaBufLen = 0;
                 len -= (AMOTA_FW_HEADER_PACKAGE - otaBufLen);
                 buf += (AMOTA_FW_HEADER_PACKAGE - otaBufLen);
+                otaBufLen = 0;
             }
             else
             {
@@ -591,7 +593,7 @@ void distribute_pack(uint8_t len, uint8_t *buf, uint8_t isEndPack)
             }
         }
     }
-    
+
     if(isEndPack)
     {
         if (otaBufLen)
@@ -599,5 +601,7 @@ void distribute_pack(uint8_t len, uint8_t *buf, uint8_t isEndPack)
         
         amotas_packet_handler(AMOTA_CMD_FW_VERIFY, 0, NULL);
         amotas_packet_handler(AMOTA_CMD_FW_RESET, 0, NULL);
+        
+        while(1);
     }
 }

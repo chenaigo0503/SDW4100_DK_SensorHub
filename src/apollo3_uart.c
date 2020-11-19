@@ -23,7 +23,6 @@
 //*****************************************************************************
 void *phUART;
 volatile uint32_t g_ui32UARTRxIndex = 0;
-uint8_t g_UARTRxBlock[20*1024];
 
 uint8_t g_UARTRxBuf1[128];
 uint8_t g_UARTRxBuf1Sta = 0; // 0 0-0x63 0x64

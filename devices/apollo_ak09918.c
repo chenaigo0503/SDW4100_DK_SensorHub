@@ -130,11 +130,11 @@ void ak099xx_init(void)
 
     if(LSM6DSO_WHO_AM_I != (uint16_t)ak099ID)
     {
-        PR_ERR("ERROR: ak09918 get ID: 0x%04x error.\n", ak099ID);
+        PR_ERR("ERROR: ak09918 get ID: 0x%04x error.", ak099ID);
     }
     else
     {
-        PR_INFO("ak09918 get ID success.\n");
+        PR_INFO("ak09918 get ID success.");
     }
 }
 

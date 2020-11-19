@@ -66,7 +66,7 @@ static void delay2run_handle(void)
     // Function processing completed, stop the timer
     if (!d2rIs)
     {
-        PR_INFO("Function processing completed, stop the timer.\n");
+        PR_INFO("Function processing completed, stop the timer.");
         am_hal_ctimer_stop(APOLLO_DELAY2RUN_TIMERNUM, APOLLO_DELAY2RUN_TIMERSEG);
         d2rTimerRun = false;
     }
@@ -98,7 +98,7 @@ void delay_to_run(uint16_t delayMs, void(*d2r_handle)(void*), void* inPara)
 
     if (d2r_handle == NULL)
     {
-        PR_ERR("ERROR The function is NULL.\n");
+        PR_ERR("ERROR The function is NULL.");
         return;
     }
     
@@ -126,7 +126,7 @@ void delay_to_run(uint16_t delayMs, void(*d2r_handle)(void*), void* inPara)
     // The function that needs to be executed is full and cannot be added
     if (i == APOLLO_DELAY2RUN_FUNMAX)
     {
-        PR_ERR("ERROR The function that needs to be executed is full.\n");
+        PR_ERR("ERROR The function that needs to be executed is full.");
         return;
     }
     

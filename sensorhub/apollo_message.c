@@ -98,7 +98,7 @@ int unpack_data(uint8_t* message_pack)
     if(ap_msg->data == NULL)
         return -1;
 
-    memcpy(ap_msg->data, &message_pack[5], ap_msg->len);
+    memcpy(ap_msg->data, &message_pack[4], ap_msg->len);
     msg_enquene(ap_msg);
 
     return 0;
@@ -140,7 +140,9 @@ uint8_t send_resp_msg(uint8_t msg_id)
         ver_msg[8] = CalcCrc8(ver_msg, sizeof(ver_msg) - 1);
         am_hal_ios_fifo_write(g_pIOSHandle, ver_msg, sizeof(ver_msg), &num_write);
         if(sizeof(ver_msg) < num_write)
-            return -1;
+            return 1;
+        
+        am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
         return 0;
     }
 
@@ -159,6 +161,7 @@ uint8_t send_resp_msg(uint8_t msg_id)
     if(sizeof(send_msg) < num_write)
         return 1;
 
+    am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
     return 0;
 }
 

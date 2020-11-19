@@ -137,8 +137,8 @@ void inform_host(void)
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
     // Interrupt the host
 #if (APOLLO3_HUB_VER == 1)
-    //am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_SET);
-    //delay_to_run(50, pulldown_iosint, NULL);
+    am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_SET);
+    delay_to_run(50, pulldown_iosint, NULL);
 //#else
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_HOST_INTSET, &ui32Arg);
 #endif
@@ -161,7 +161,7 @@ void am_ioslave_ios_isr(void)
 
     if (ui32Status & AM_HAL_IOS_INT_FUNDFL)
     {
-        PR_ERR("Hitting underflow for the requested IOS FIFO transfer\n");
+        PR_ERR("Hitting underflow for the requested IOS FIFO transfer");
         // We should never hit this case unless the threshold has beeen set
         // incorrect, or we are unable to handle the data rate
         // ERROR!
@@ -187,6 +187,6 @@ void am_ioslave_ios_isr(void)
         // Set up a pointer for writing 32-bit aligned packets through
         // the IO slave interface.
         ret = unpack_data((uint8_t*)am_hal_ios_pui8LRAM);
-        PR_DBG("upack data: ret = %d\n", ret);
+        PR_DBG("upack data: ret = %d", ret);
     }
 }

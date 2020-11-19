@@ -133,12 +133,12 @@ static uint8_t pah_8011_verify_product_id(void)
     
     if(PAH8011_WHO_AM_I != (uint8_t)pah8011ID)
     {
-        PR_ERR("ERROR: PAH8011 get ID: 0x%04x error.\n", pah8011ID);
+        PR_ERR("ERROR: PAH8011 get ID: 0x%04x error.", pah8011ID);
         return 1;
     }
     else
     {
-        PR_INFO("PAH8011 get ID success.\n");
+        PR_INFO("PAH8011 get ID success.");
         return 0;
     }
 }

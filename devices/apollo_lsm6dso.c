@@ -117,6 +117,38 @@ static void lsm6dso_device_id_get(stmdev_ctx_t *ctx, uint32_t *buff)
     ctx->read_reg(ctx->handle, LSM6DSO_OFFSET_ID, buff, 1);
 }
 
+/**
+  * @brief  Software reset. Restore the default values
+  *         in user registers[set]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  val      change the values of sw_reset in reg CTRL3_C
+  *
+  */
+static void lsm6dso_reset_set(stmdev_ctx_t *ctx, uint8_t val)
+{
+    lsm6dso_ctrl3_c_t reg;
+
+    ctx->read_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint32_t*)&reg, 1);
+    reg.sw_reset = val;
+    ctx->write_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint32_t*)&reg, 1);
+}
+
+/**
+  * @brief  Software reset. Restore the default values in user registers.[get]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  val      change the values of sw_reset in reg CTRL3_C
+  *
+  */
+static void lsm6dso_reset_get(stmdev_ctx_t *ctx, uint8_t *val)
+{
+    lsm6dso_ctrl3_c_t reg;
+
+    ctx->read_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint32_t*)&reg, 1);
+    *val = reg.sw_reset;
+}
+
 //*****************************************************************************
 //
 //! @brief Configures the necessary pins for lsm6dso
@@ -129,6 +161,8 @@ static void lsm6dso_device_id_get(stmdev_ctx_t *ctx, uint32_t *buff)
 void lsm6dso_init(void)
 {
     uint32_t whoAmI = 0;
+    uint8_t rst;
+
     am_hal_iom_config_t m_sIOMSpiConfig =
     {
         .eInterfaceMode = AM_HAL_IOM_SPI_MODE,
@@ -153,7 +187,7 @@ void lsm6dso_init(void)
 
     // Enable the IOM.
     am_hal_iom_enable(g_Lsm6dsoCtx.handle);
-    am_util_delay_ms(20);
+    am_util_delay_ms(10);
 
     // irq delay tp config
     //am_hal_gpio_pinconfig(LSM6DSO_INTPIN_ACC, g_AM_HAL_GPIO_INPUT_PULLUP);
@@ -161,13 +195,19 @@ void lsm6dso_init(void)
     /* Check device ID */
     lsm6dso_device_id_get(&g_Lsm6dsoCtx, &whoAmI);
     if(LSM6DSO_WHO_AM_I != (uint8_t)whoAmI)
-    {
-        PR_ERR("ERROR: lsm6dso get ID: 0x%02x error.\n", whoAmI);
-    }
+        PR_ERR("ERROR: lsm6dso get ID: 0x%02x error.", whoAmI);
     else
+        PR_INFO("lsm6dso get ID success.");
+    
+    lsm6dso_reset_set(&g_Lsm6dsoCtx, PROPERTY_ENABLE);
+    do
     {
-        PR_INFO("lsm6dso get ID success.\n");
+        lsm6dso_reset_get(&g_Lsm6dsoCtx, &rst);
+        am_util_delay_ms(10);
     }
+    while(rst);
+    
+    PR_ERR("lsm6dso rest OK");
 }
 
 #if 0
