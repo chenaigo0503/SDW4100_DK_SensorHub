@@ -76,7 +76,7 @@ static void platform_write(void *handle, uint8_t reg, uint32_t *bufp,
     Transaction.ui32Instr       = reg;
     Transaction.eDirection      = AM_HAL_IOM_TX;
     Transaction.ui32NumBytes    = len;
-    Transaction.pui32RxBuffer   = bufp;
+    Transaction.pui32TxBuffer   = bufp;
     Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;

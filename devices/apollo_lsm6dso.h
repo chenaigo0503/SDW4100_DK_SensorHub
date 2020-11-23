@@ -57,8 +57,8 @@ typedef struct {
 #define PROPERTY_ENABLE                 (1U)
 
 
-typedef void (*stmdev_write_ptr) (void *, uint8_t, uint32_t*, uint32_t);
-typedef void (*stmdev_read_ptr) (void *, uint8_t, uint32_t*, uint32_t);
+typedef void (*stmdev_write_ptr) (void *, uint8_t, uint8_t*, uint32_t);
+typedef void (*stmdev_read_ptr) (void *, uint8_t, uint8_t*, uint32_t);
 
 typedef struct {
   /** Component mandatory fields **/

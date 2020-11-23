@@ -32,7 +32,7 @@ extern "C"
 #define AK09918_ADDR       0x0C
 
 // sensor ID
-#define LSM6DSO_WHO_AM_I   0xc48
+#define AK09918_WHO_AM_I   0xc48
 
 // Register offset address
 #define AK099XX_REG_WIA1                 0x00

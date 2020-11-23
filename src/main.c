@@ -83,8 +83,6 @@ main(void)
 
     while(1)
     {
-        static uint32_t read_data = 0;
-        static uint16_t data_len;
         
 /*********************************************************************
         // OTA testing through UART

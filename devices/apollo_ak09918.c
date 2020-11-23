@@ -76,7 +76,7 @@ static void platform_write(void *handle, uint8_t reg, uint32_t *bufp,
     Transaction.ui32Instr       = reg;
     Transaction.eDirection      = AM_HAL_IOM_TX;
     Transaction.ui32NumBytes    = len;
-    Transaction.pui32RxBuffer   = bufp;
+    Transaction.pui32TxBuffer   = bufp;
     Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
@@ -128,7 +128,7 @@ void ak099xx_init(void)
 
     ak099xx_read(AK099XX_REG_WIA1, &ak099ID, 2);
 
-    if(LSM6DSO_WHO_AM_I != (uint16_t)ak099ID)
+    if(AK09918_WHO_AM_I != (uint16_t)ak099ID)
     {
         PR_ERR("ERROR: ak09918 get ID: 0x%04x error.", ak099ID);
     }

@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "am_bsp.h"
 #include "am_mcu_apollo.h"
 #include "am_util.h"
@@ -27,7 +28,7 @@
 #include "apollo_tracelog.h"
 
 stmdev_ctx_t g_Lsm6dsoCtx;
-
+static uint32_t lsmBuffer[2];
 
 /*
  * @brief  Read generic device register (platform dependent)
@@ -39,18 +40,19 @@ stmdev_ctx_t g_Lsm6dsoCtx;
  * @param  len       number of consecutive register to read
  *
  */
-static void platform_read(void *handle, uint8_t reg, uint32_t *bufp,
+static void lsm6d_read(void *handle, uint8_t reg, uint8_t *bufp,
                              uint32_t len)
 {
     am_hal_iom_transfer_t       Transaction;
 
-    reg |= 0x80;
+    // Temporary fix for hardware bugs.
+    memset(&Transaction, 0, sizeof(Transaction));
 
     Transaction.ui32InstrLen    = 1;
-    Transaction.ui32Instr       = reg;
+    Transaction.ui32Instr       = reg | 0x80;
     Transaction.eDirection      = AM_HAL_IOM_RX;
     Transaction.ui32NumBytes    = len;
-    Transaction.pui32RxBuffer   = bufp;
+    Transaction.pui32RxBuffer   = lsmBuffer;
     Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
@@ -63,6 +65,7 @@ static void platform_read(void *handle, uint8_t reg, uint32_t *bufp,
 #endif
 
     am_hal_iom_blocking_transfer(handle, &Transaction);
+    memcpy(bufp, lsmBuffer, len);
 #if (APOLLO3_HUB_VER == 1)
     am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_SET);
 #endif
@@ -78,16 +81,19 @@ static void platform_read(void *handle, uint8_t reg, uint32_t *bufp,
  * @param  len       number of consecutive register to write
  *
  */
-static void platform_write(void *handle, uint8_t reg, uint32_t *bufp,
+static void lsm6d_write(void *handle, uint8_t reg, uint8_t *bufp,
                               uint32_t len)
 {
     am_hal_iom_transfer_t       Transaction;
+
+    memcpy(lsmBuffer, bufp, len);
+    memset(&Transaction, 0, sizeof(Transaction));
 
     Transaction.ui32InstrLen    = 1;
     Transaction.ui32Instr       = reg;
     Transaction.eDirection      = AM_HAL_IOM_TX;
     Transaction.ui32NumBytes    = len;
-    Transaction.pui32RxBuffer   = bufp;
+    Transaction.pui32TxBuffer   = lsmBuffer;
     Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
@@ -112,7 +118,7 @@ static void platform_write(void *handle, uint8_t reg, uint32_t *bufp,
   * @param  buff     buffer that stores data read
   *
   */
-static void lsm6dso_device_id_get(stmdev_ctx_t *ctx, uint32_t *buff)
+static void lsm6dso_device_id_get(stmdev_ctx_t *ctx, uint8_t *buff)
 {
     ctx->read_reg(ctx->handle, LSM6DSO_OFFSET_ID, buff, 1);
 }
@@ -129,9 +135,11 @@ static void lsm6dso_reset_set(stmdev_ctx_t *ctx, uint8_t val)
 {
     lsm6dso_ctrl3_c_t reg;
 
-    ctx->read_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint32_t*)&reg, 1);
+    ctx->read_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint8_t*)&reg, 1);
+    PR_ERR("rest %x", reg);
     reg.sw_reset = val;
-    ctx->write_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint32_t*)&reg, 1);
+    am_util_delay_ms(10);
+    ctx->write_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint8_t*)&reg, 1);
 }
 
 /**
@@ -145,7 +153,7 @@ static void lsm6dso_reset_get(stmdev_ctx_t *ctx, uint8_t *val)
 {
     lsm6dso_ctrl3_c_t reg;
 
-    ctx->read_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint32_t*)&reg, 1);
+    ctx->read_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint8_t*)&reg, 1);
     *val = reg.sw_reset;
 }
 
@@ -160,23 +168,24 @@ static void lsm6dso_reset_get(stmdev_ctx_t *ctx, uint8_t *val)
 //*****************************************************************************
 void lsm6dso_init(void)
 {
-    uint32_t whoAmI = 0;
+    uint8_t whoAmI = 0;
     uint8_t rst;
 
     am_hal_iom_config_t m_sIOMSpiConfig =
     {
         .eInterfaceMode = AM_HAL_IOM_SPI_MODE,
-        .ui32ClockFreq = AM_HAL_IOM_8MHZ,
+        .ui32ClockFreq = AM_HAL_IOM_1MHZ,
         .eSpiMode = AM_HAL_IOM_SPI_MODE_0,
     };
 
-    g_Lsm6dsoCtx.read_reg = platform_read;
-    g_Lsm6dsoCtx.write_reg = platform_write;
     am_hal_iom_initialize(LSM6DSO_IOM_MODULE, &g_Lsm6dsoCtx.handle);
     am_hal_iom_power_ctrl(g_Lsm6dsoCtx.handle, AM_HAL_SYSCTRL_WAKE, false);
 
     // Set the required configuration settings for the IOM.
     am_hal_iom_configure(g_Lsm6dsoCtx.handle, &m_sIOMSpiConfig);
+
+    g_Lsm6dsoCtx.read_reg = lsm6d_read;
+    g_Lsm6dsoCtx.write_reg = lsm6d_write;
 
     // Configure the IOM pins.
 #if (APOLLO3_HUB_VER == 1)
@@ -187,7 +196,7 @@ void lsm6dso_init(void)
 
     // Enable the IOM.
     am_hal_iom_enable(g_Lsm6dsoCtx.handle);
-    am_util_delay_ms(10);
+    am_util_delay_ms(1);
 
     // irq delay tp config
     //am_hal_gpio_pinconfig(LSM6DSO_INTPIN_ACC, g_AM_HAL_GPIO_INPUT_PULLUP);
@@ -198,14 +207,14 @@ void lsm6dso_init(void)
         PR_ERR("ERROR: lsm6dso get ID: 0x%02x error.", whoAmI);
     else
         PR_INFO("lsm6dso get ID success.");
-    
+
     lsm6dso_reset_set(&g_Lsm6dsoCtx, PROPERTY_ENABLE);
-    do
+    /*do
     {
         lsm6dso_reset_get(&g_Lsm6dsoCtx, &rst);
         am_util_delay_ms(10);
     }
-    while(rst);
+    while(rst);*/
     
     PR_ERR("lsm6dso rest OK");
 }
