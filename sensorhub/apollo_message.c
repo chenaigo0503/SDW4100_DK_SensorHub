@@ -57,8 +57,6 @@ void msg_enquene(apollo_msg* ap_msg)
 
 void msg_dequene(void)
 {
-    apollo_msg* front_msg = NULL;
-
     if(msg_link_quene.front == NULL)
         return;
 
