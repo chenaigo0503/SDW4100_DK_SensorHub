@@ -139,6 +139,12 @@ main(void)
             }
             msg_dequene();
         }
+        
+        if (*(uint8_t*)&apollo_irq)
+        {
+            PR_ERR("lsm: %x", apollo_irq);
+            apollo_irq.lsm_irq1 = 0;
+        }
     }
 
     while (1)

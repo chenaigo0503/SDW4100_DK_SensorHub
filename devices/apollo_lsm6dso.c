@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+#include <math.h>
 #include "am_bsp.h"
 #include "am_mcu_apollo.h"
 #include "am_util.h"
@@ -29,6 +30,29 @@
 
 stmdev_ctx_t g_Lsm6dsoCtx;
 static uint32_t lsmBuffer[2];
+
+
+typedef union{
+  int16_t i16bit[3];
+  uint8_t u8bit[6];
+} axis3bit16_t;
+static axis3bit16_t data_raw_acceleration;
+static axis3bit16_t data_raw_angular_rate;
+static float acceleration_mg[3];
+static float angular_rate_mdps[3];
+/**
+  * @defgroup  LSM6DSOX_Private_functions
+  * @brief     Section collect all the utility functions needed by APIs.
+  * @{
+  *
+  */
+
+static void bytecpy(uint8_t *target, uint8_t *source)
+{
+  if ( (target != NULL) && (source != NULL) ) {
+    *target = *source;
+  }
+}
 
 /*
  * @brief  Read generic device register (platform dependent)
@@ -64,6 +88,7 @@ static void lsm6d_read(void *handle, uint8_t reg, uint8_t *bufp,
     Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
 #endif
 
+    //PR_ERR("R: %d", am_hal_iom_blocking_transfer(handle, &Transaction));
     am_hal_iom_blocking_transfer(handle, &Transaction);
     memcpy(bufp, lsmBuffer, len);
 #if (APOLLO3_HUB_VER == 1)
@@ -105,11 +130,78 @@ static void lsm6d_write(void *handle, uint8_t reg, uint8_t *bufp,
     Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
 #endif
 
+    //PR_ERR("W: %d", am_hal_iom_blocking_transfer(handle, &Transaction));
     am_hal_iom_blocking_transfer(handle, &Transaction);
 #if (APOLLO3_HUB_VER == 1)
     am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_SET);
 #endif
 }
+
+/**
+  * @defgroup  LSM6DSO_Sensitivity
+  * @brief     These functions convert raw-data into engineering units.
+  * @{
+  *
+*/
+float_t lsm6dso_from_fs2_to_mg(int16_t lsb)
+{
+  return ((float_t)lsb) * 0.061f;
+}
+
+float_t lsm6dso_from_fs4_to_mg(int16_t lsb)
+{
+  return ((float_t)lsb) * 0.122f;
+}
+
+float_t lsm6dso_from_fs8_to_mg(int16_t lsb)
+{
+  return ((float_t)lsb) * 0.244f;
+}
+
+float_t lsm6dso_from_fs16_to_mg(int16_t lsb)
+{
+  return ((float_t)lsb) *0.488f;
+}
+
+float_t lsm6dso_from_fs125_to_mdps(int16_t lsb)
+{
+  return ((float_t)lsb) *4.375f;
+}
+
+float_t lsm6dso_from_fs500_to_mdps(int16_t lsb)
+{
+  return ((float_t)lsb) *17.50f;
+}
+
+float_t lsm6dso_from_fs250_to_mdps(int16_t lsb)
+{
+  return ((float_t)lsb) *8.750f;
+}
+
+float_t lsm6dso_from_fs1000_to_mdps(int16_t lsb)
+{
+  return ((float_t)lsb) *35.0f;
+}
+
+float_t lsm6dso_from_fs2000_to_mdps(int16_t lsb)
+{
+  return ((float_t)lsb) *70.0f;
+}
+
+float_t lsm6dso_from_lsb_to_celsius(int16_t lsb)
+{
+  return (((float_t)lsb / 256.0f) + 25.0f);
+}
+
+float_t lsm6dso_from_lsb_to_nsec(int16_t lsb)
+{
+  return ((float_t)lsb * 25000.0f);
+}
+
+/**
+  * @}
+  *
+*/
 
 /**
   * @brief  Device "Who am I".[get]
@@ -375,9 +467,25 @@ void lsm6dso_gy_data_rate_set(stmdev_ctx_t *ctx, lsm6dso_odr_g_t val)
         }
     }
 
-        ctx->read_reg(ctx, LSM6DSO_CTRL2_G, (uint8_t*)&reg, 1);
+        ctx->read_reg(ctx->handle, LSM6DSO_CTRL2_G, (uint8_t*)&reg, 1);
         reg.odr_g = (uint8_t) odr_gy;
-        ctx->write_reg(ctx, LSM6DSO_CTRL2_G, (uint8_t*)&reg, 1);
+        ctx->write_reg(ctx->handle, LSM6DSO_CTRL2_G, (uint8_t*)&reg, 1);
+}
+
+/**
+  * @brief  Block data update.[set]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  val      change the values of bdu in reg CTRL3_C
+  *
+  */
+void lsm6dso_block_data_update_set(stmdev_ctx_t *ctx, uint8_t val)
+{
+    lsm6dso_ctrl3_c_t reg;
+
+    ctx->read_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint8_t*)&reg, 1);
+    reg.bdu = val;
+    ctx->write_reg(ctx->handle, LSM6DSO_CTRL3_C, (uint8_t*)&reg, 1);
 }
 
 /**
@@ -810,6 +918,182 @@ void lsm6dso_pin_int1_route_set(stmdev_ctx_t *ctx,
     ctx->write_reg(ctx->handle, LSM6DSO_TAP_CFG2, (uint8_t*) &tap_cfg2, 1);
 }
 
+/**
+  * @brief  Get the status of all the interrupt sources.[get]
+  *
+  * @param  ctx          communication interface handler.(ptr)
+  * @param  val          the status of all the interrupt sources.(ptr)
+  *
+  */
+void lsm6dso_all_sources_get(stmdev_ctx_t *ctx,
+                                 lsm6dso_all_sources_t *val)
+{
+    lsm6dso_emb_func_status_mainpage_t emb_func_status_mainpage;
+    lsm6dso_status_master_mainpage_t   status_master_mainpage;
+    lsm6dso_fsm_status_a_mainpage_t    fsm_status_a_mainpage;
+    lsm6dso_fsm_status_b_mainpage_t    fsm_status_b_mainpage;
+    lsm6dso_fifo_status1_t             fifo_status1;
+    lsm6dso_fifo_status2_t             fifo_status2;
+    lsm6dso_all_int_src_t              all_int_src;
+    lsm6dso_wake_up_src_t              wake_up_src;
+    lsm6dso_status_reg_t               status_reg;
+    lsm6dso_tap_src_t                  tap_src;
+    lsm6dso_d6d_src_t                  d6d_src;
+    lsm6dso_ctrl5_c_t                  ctrl5_c;
+    uint8_t                            reg[12];
+
+    ctx->read_reg(ctx->handle, LSM6DSO_CTRL5_C, (uint8_t*)&ctrl5_c, 1);
+    ctrl5_c.not_used_01 = PROPERTY_ENABLE;
+    ctx->write_reg(ctx->handle, LSM6DSO_CTRL5_C, (uint8_t*)&ctrl5_c, 1);
+
+    ctx->read_reg(ctx->handle, LSM6DSO_ALL_INT_SRC, reg, 12);
+
+    bytecpy(( uint8_t*)&all_int_src, &reg[0]);
+    bytecpy(( uint8_t*)&wake_up_src, &reg[1]);
+    bytecpy(( uint8_t*)&tap_src, &reg[2]);
+    bytecpy(( uint8_t*)&d6d_src, &reg[3]);
+    bytecpy(( uint8_t*)&status_reg, &reg[4]);
+    bytecpy(( uint8_t*)&emb_func_status_mainpage, &reg[5]);
+    bytecpy(( uint8_t*)&fsm_status_a_mainpage, &reg[6]);
+    bytecpy(( uint8_t*)&fsm_status_b_mainpage, &reg[7]);
+    bytecpy(( uint8_t*)&status_master_mainpage, &reg[9]);
+    bytecpy(( uint8_t*)&fifo_status1, &reg[10]);
+    bytecpy(( uint8_t*)&fifo_status2, &reg[11]);
+
+    val->timestamp = all_int_src.timestamp_endcount;
+
+    val->wake_up_z    = wake_up_src.z_wu;
+    val->wake_up_y    = wake_up_src.y_wu;
+    val->wake_up_x    = wake_up_src.x_wu;
+    val->wake_up      = wake_up_src.wu_ia;
+    val->sleep_state  = wake_up_src.sleep_state;
+    val->free_fall    = wake_up_src.ff_ia;
+    val->sleep_change = wake_up_src.sleep_change_ia;
+
+    val->tap_x      = tap_src.x_tap;
+    val->tap_y      = tap_src.y_tap;
+    val->tap_z      = tap_src.z_tap;
+    val->tap_sign   = tap_src.tap_sign;
+    val->double_tap = tap_src.double_tap;
+    val->single_tap = tap_src.single_tap;
+
+    val->six_d_xl = d6d_src.xl;
+    val->six_d_xh = d6d_src.xh;
+    val->six_d_yl = d6d_src.yl;
+    val->six_d_yh = d6d_src.yh;
+    val->six_d_zl = d6d_src.zl;
+    val->six_d_zh = d6d_src.zh;
+    val->six_d    = d6d_src.d6d_ia;
+    val->den_flag = d6d_src.den_drdy;
+
+    val->drdy_xl   = status_reg.xlda;
+    val->drdy_g    = status_reg.gda;
+    val->drdy_temp = status_reg.tda;
+
+    val->step_detector = emb_func_status_mainpage.is_step_det;
+    val->tilt          = emb_func_status_mainpage.is_tilt;
+    val->sig_mot       = emb_func_status_mainpage.is_sigmot;
+    val->fsm_lc        = emb_func_status_mainpage.is_fsm_lc;
+
+    val->fsm1 = fsm_status_a_mainpage.is_fsm1;
+    val->fsm2 = fsm_status_a_mainpage.is_fsm2;
+    val->fsm3 = fsm_status_a_mainpage.is_fsm3;
+    val->fsm4 = fsm_status_a_mainpage.is_fsm4;
+    val->fsm5 = fsm_status_a_mainpage.is_fsm5;
+    val->fsm6 = fsm_status_a_mainpage.is_fsm6;
+    val->fsm7 = fsm_status_a_mainpage.is_fsm7;
+    val->fsm8 = fsm_status_a_mainpage.is_fsm8;
+
+    val->fsm9  = fsm_status_b_mainpage.is_fsm9;
+    val->fsm10 = fsm_status_b_mainpage.is_fsm10;
+    val->fsm11 = fsm_status_b_mainpage.is_fsm11;
+    val->fsm12 = fsm_status_b_mainpage.is_fsm12;
+    val->fsm13 = fsm_status_b_mainpage.is_fsm13;
+    val->fsm14 = fsm_status_b_mainpage.is_fsm14;
+    val->fsm15 = fsm_status_b_mainpage.is_fsm15;
+    val->fsm16 = fsm_status_b_mainpage.is_fsm16;
+
+    val->sh_endop       = status_master_mainpage.sens_hub_endop;
+    val->sh_slave0_nack = status_master_mainpage.slave0_nack;
+    val->sh_slave1_nack = status_master_mainpage.slave1_nack;
+    val->sh_slave2_nack = status_master_mainpage.slave2_nack;
+    val->sh_slave3_nack = status_master_mainpage.slave3_nack;
+    val->sh_wr_once     = status_master_mainpage.wr_once_done;
+
+    val->fifo_diff = (256U * fifo_status2.diff_fifo) + fifo_status1.diff_fifo;
+
+    val->fifo_ovr_latched = fifo_status2.over_run_latched;
+    val->fifo_bdr         = fifo_status2.counter_bdr_ia;
+    val->fifo_full        = fifo_status2.fifo_full_ia;
+    val->fifo_ovr         = fifo_status2.fifo_ovr_ia;
+    val->fifo_th          = fifo_status2.fifo_wtm_ia;
+
+    ctrl5_c.not_used_01 = PROPERTY_DISABLE;
+    ctx->write_reg(ctx->handle, LSM6DSO_CTRL5_C, (uint8_t*)&ctrl5_c, 1);
+}
+
+/**
+  * @brief  Accelerometer new data available.[get]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  val      change the values of xlda in reg STATUS_REG
+  *
+  */
+void lsm6dso_xl_flag_data_ready_get(stmdev_ctx_t *ctx, uint8_t *val)
+{
+    lsm6dso_status_reg_t reg;
+
+    ctx->read_reg(ctx->handle, LSM6DSO_STATUS_REG, (uint8_t*)&reg, 1);
+    *val = reg.xlda;
+}
+
+/**
+  * @brief  Gyroscope new data available.[get]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  val      change the values of gda in reg STATUS_REG
+  *
+  */
+void lsm6dso_gy_flag_data_ready_get(stmdev_ctx_t *ctx, uint8_t *val)
+{
+    lsm6dso_status_reg_t reg;
+
+    ctx->read_reg(ctx->handle, LSM6DSO_STATUS_REG, (uint8_t*)&reg, 1);
+    *val = reg.gda;
+}
+
+/**
+  * @brief  Angular rate sensor. The value is expressed as a 16-bit
+  *         word in two’s complement.[get]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  buff     buffer that stores data read
+  *
+  */
+void lsm6dso_angular_rate_raw_get(stmdev_ctx_t *ctx, uint8_t *buff)
+{
+    ctx->read_reg(ctx->handle, LSM6DSO_OUTX_L_G, buff, 6);
+}
+
+/**
+  * @brief  Linear acceleration output register.
+  *         The value is expressed as a 16-bit word in two’s complement.[get]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  buff     buffer that stores data read
+  *
+  */
+void lsm6dso_acceleration_raw_get(stmdev_ctx_t *ctx, uint8_t *buff)
+{
+    ctx->read_reg(ctx->handle, LSM6DSO_OUTX_L_A, buff, 6);
+}
+
+// ISR callback for the host IOINT
+static void lsm_int1_handler(void)
+{
+    apollo_irq.lsm_irq1 =  1;
+}
+
 //*****************************************************************************
 //
 //! @brief Configures the necessary pins for lsm6dso
@@ -830,6 +1114,14 @@ void lsm6dso_init(void)
         .eInterfaceMode = AM_HAL_IOM_SPI_MODE,
         .ui32ClockFreq = AM_HAL_IOM_8MHZ,
         .eSpiMode = AM_HAL_IOM_SPI_MODE_0,
+    };
+    
+    am_hal_gpio_pincfg_t m_lsm6dsoGpioInt1 = 
+    {
+        .uFuncSel = AM_HAL_PIN_14_GPIO,
+        .eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
+        .eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI,
+        .eGPInput = AM_HAL_GPIO_PIN_INPUT_ENABLE,
     };
 
     am_hal_iom_initialize(LSM6DSO_IOM_MODULE, &g_Lsm6dsoCtx.handle);
@@ -852,8 +1144,13 @@ void lsm6dso_init(void)
     am_hal_iom_enable(g_Lsm6dsoCtx.handle);
     am_util_delay_ms(1);
 
-    // irq delay tp config
-    //am_hal_gpio_pinconfig(LSM6DSO_INTPIN_ACC, g_AM_HAL_GPIO_INPUT_PULLUP);
+    // GPIO irq set up
+    am_hal_gpio_pinconfig(LSM6DSO_PIN_INT1, m_lsm6dsoGpioInt1);
+    AM_HAL_GPIO_MASKCREATE(GpioIntMask);
+    am_hal_gpio_interrupt_clear(AM_HAL_GPIO_MASKBIT(pGpioIntMask, LSM6DSO_PIN_INT1));
+    am_hal_gpio_interrupt_register(LSM6DSO_PIN_INT1, lsm_int1_handler);
+    am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, LSM6DSO_PIN_INT1));
+    NVIC_EnableIRQ(GPIO_IRQn);
 
     /* Check device ID */
     lsm6dso_device_id_get(&g_Lsm6dsoCtx, &whoAmI);
@@ -872,18 +1169,31 @@ void lsm6dso_init(void)
     /* Disable I3C interface */
     lsm6dso_i3c_disable_set(&g_Lsm6dsoCtx, LSM6DSO_I3C_DISABLE);
 
+  /* Enable Block Data Update */
+  lsm6dso_block_data_update_set(&g_Lsm6dsoCtx, PROPERTY_ENABLE);
+
     /* Set XL and Gyro Output Data Rate */
     lsm6dso_xl_data_rate_set(&g_Lsm6dsoCtx, LSM6DSO_XL_ODR_208Hz);
     lsm6dso_gy_data_rate_set(&g_Lsm6dsoCtx, LSM6DSO_GY_ODR_104Hz);
 
+
+      /* Set Output Data Rate */
+  lsm6dso_xl_data_rate_set(&g_Lsm6dsoCtx, LSM6DSO_XL_ODR_12Hz5);
+  lsm6dso_gy_data_rate_set(&g_Lsm6dsoCtx, LSM6DSO_GY_ODR_12Hz5);
+
+  /* Set full scale */
+  lsm6dso_xl_full_scale_set(&g_Lsm6dsoCtx, LSM6DSO_2g);
+  lsm6dso_gy_full_scale_set(&g_Lsm6dsoCtx, LSM6DSO_2000dps);
+
+#if 0 // active decte
     /* Set 2g full XL scale and 250 dps full Gyro */
     lsm6dso_xl_full_scale_set(&g_Lsm6dsoCtx, LSM6DSO_2g);
     lsm6dso_gy_full_scale_set(&g_Lsm6dsoCtx, LSM6DSO_250dps);
 
-    /* Set duration for Activity detection to 9.62 ms (= 2 * 1 / ODR_XL) */
+    /* Set duration for Activity detection to 9.62 ms (= val * 1 / ODR_XL) */
     lsm6dso_wkup_dur_set(&g_Lsm6dsoCtx, 0x02);
 
-    /* Set duration for Inactivity detection to 4.92 s (= 2 * 512 / ODR_XL) */
+    /* Set duration for Inactivity detection to 4.92 s (= val * 512 / ODR_XL) */
     lsm6dso_act_sleep_dur_set(&g_Lsm6dsoCtx, 0x02);
 
     /* Set Activity/Inactivity threshold to 62.5 mg */
@@ -896,8 +1206,52 @@ void lsm6dso_init(void)
     lsm6dso_pin_int1_route_get(&g_Lsm6dsoCtx, &int1_route);
     int1_route.sleep_change = PROPERTY_ENABLE;
     lsm6dso_pin_int1_route_set(&g_Lsm6dsoCtx, int1_route);
-    
-    PR_ERR("lsm6dso init OK");
+#endif
+
+#if 1
+  /* Wait samples */
+  while(1)
+  {
+    uint8_t reg;
+
+    /* Read output only if new xl value is available */
+    lsm6dso_xl_flag_data_ready_get(&g_Lsm6dsoCtx, &reg);
+    if (reg)
+    {
+      /* Read acceleration field data */
+      memset(data_raw_acceleration.u8bit, 0x00, 3 * sizeof(int16_t));
+      lsm6dso_acceleration_raw_get(&g_Lsm6dsoCtx, data_raw_acceleration.u8bit);
+      acceleration_mg[0] =
+        lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[0]);
+      acceleration_mg[1] =
+        lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[1]);
+      acceleration_mg[2] =
+        lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[2]);
+
+      //PR_ERR("Acceleration [mg]:%4.2f\t%4.2f\t%4.2f",
+              //acceleration_mg[0], acceleration_mg[1], acceleration_mg[2]);
+        pr_err("x1=%4.2f,x2=%4.2f,x3=%4.2f\r\n",acceleration_mg[0], acceleration_mg[1], acceleration_mg[2]);
+    }
+
+    /* Read output only if new gyro value is available */
+    lsm6dso_gy_flag_data_ready_get(&g_Lsm6dsoCtx, &reg);
+    if (reg)
+    {
+      /* Read angular rate field data */
+      memset(data_raw_angular_rate.u8bit, 0x00, 3 * sizeof(int16_t));
+      lsm6dso_angular_rate_raw_get(&g_Lsm6dsoCtx, data_raw_angular_rate.u8bit);
+      angular_rate_mdps[0] =
+        lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[0]);
+      angular_rate_mdps[1] =
+        lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[1]);
+      angular_rate_mdps[2] =
+        lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[2]);
+
+      //PR_ERR("Angular rate [mdps]:%4.2f\t%4.2f\t%4.2f\r\n",
+              //angular_rate_mdps[0], angular_rate_mdps[1], angular_rate_mdps[2]);
+    }
+  }
+#endif
 }
 
 /**
@@ -945,7 +1299,7 @@ void lsm6dso_fsm_data_rate_get(stmdev_ctx_t *ctx, lsm6dso_fsm_odr_t *val)
     lsm6dso_emb_func_odr_cfg_b_t reg;
 
     lsm6dso_mem_bank_set(ctx, LSM6DSO_EMBEDDED_FUNC_BANK);
-    ctx->read_reg(ctx, LSM6DSO_EMB_FUNC_ODR_CFG_B, (uint8_t*)&reg, 1);
+    ctx->read_reg(ctx->handle, LSM6DSO_EMB_FUNC_ODR_CFG_B, (uint8_t*)&reg, 1);
     switch (reg.fsm_odr) {
       case LSM6DSO_ODR_FSM_12Hz5:
         *val = LSM6DSO_ODR_FSM_12Hz5;

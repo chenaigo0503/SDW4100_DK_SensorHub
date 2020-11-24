@@ -16,6 +16,18 @@
 #define APOLLO3_INIT_H
 
 #include "am_mcu_apollo.h"
+
+typedef struct {
+  uint8_t lsm_irq1                 : 1;
+  uint8_t lsm_irq2                 : 1;
+  uint8_t akm_irq                  : 1;
+  uint8_t bmp_irq                  : 1;
+  uint8_t pah_irq1                 : 1;
+  uint8_t pah_irq2                 : 1;
+  uint8_t host_irq1                : 1;
+  uint8_t host_irq2                : 1;
+} apollo_irq_c_t;
+extern volatile apollo_irq_c_t apollo_irq;
 //*****************************************************************************
 //
 // Variables used globally

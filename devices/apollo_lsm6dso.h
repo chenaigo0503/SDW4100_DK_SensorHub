@@ -32,8 +32,8 @@ extern "C"
 #define LSM6DSO_PIN_CE     4
 #endif
 #define LSM6DSO_IOM_MODULE 0
-#define LSM6DSO_INTPIN_ACC 14
-#define LSM6DSO_INTPIN_GYR 15
+#define LSM6DSO_PIN_INT1   14
+#define LSM6DSO_PIN_INT2   15
 
 // sensor ID
 #define LSM6DSO_WHO_AM_I   0x6C
@@ -181,6 +181,15 @@ typedef struct {
   uint8_t not_used_03              : 1;
 } lsm6dso_ctrl4_c_t;
 
+#define LSM6DSO_CTRL5_C                      0x14U
+typedef struct {
+  uint8_t st_xl                    : 2;
+  uint8_t st_g                     : 2;
+  uint8_t not_used_01              : 1;
+  uint8_t rounding                 : 2;
+  uint8_t xl_ulp_en                : 1;
+} lsm6dso_ctrl5_c_t;
+
 #define LSM6DSO_CTRL9_XL                     0x18U
 typedef struct {
   uint8_t not_used_01              : 1;
@@ -191,6 +200,137 @@ typedef struct {
   uint8_t den_y                    : 1;
   uint8_t den_x                    : 1;
 } lsm6dso_ctrl9_xl_t;
+
+#define LSM6DSO_ALL_INT_SRC                  0x1AU
+typedef struct {
+  uint8_t ff_ia                    : 1;
+  uint8_t wu_ia                    : 1;
+  uint8_t single_tap               : 1;
+  uint8_t double_tap               : 1;
+  uint8_t d6d_ia                   : 1;
+  uint8_t sleep_change_ia          : 1;
+  uint8_t not_used_01              : 1;
+  uint8_t timestamp_endcount       : 1;
+} lsm6dso_all_int_src_t;
+
+#define LSM6DSO_WAKE_UP_SRC                  0x1BU
+typedef struct {
+  uint8_t z_wu                     : 1;
+  uint8_t y_wu                     : 1;
+  uint8_t x_wu                     : 1;
+  uint8_t wu_ia                    : 1;
+  uint8_t sleep_state              : 1;
+  uint8_t ff_ia                    : 1;
+  uint8_t sleep_change_ia          : 1;
+  uint8_t not_used_01              : 1;
+} lsm6dso_wake_up_src_t;
+
+#define LSM6DSO_TAP_SRC                      0x1CU
+typedef struct {
+  uint8_t z_tap                    : 1;
+  uint8_t y_tap                    : 1;
+  uint8_t x_tap                    : 1;
+  uint8_t tap_sign                 : 1;
+  uint8_t double_tap               : 1;
+  uint8_t single_tap               : 1;
+  uint8_t tap_ia                   : 1;
+  uint8_t not_used_02              : 1;
+} lsm6dso_tap_src_t;
+
+#define LSM6DSO_D6D_SRC                      0x1DU
+typedef struct {
+  uint8_t xl                       : 1;
+  uint8_t xh                       : 1;
+  uint8_t yl                       : 1;
+  uint8_t yh                       : 1;
+  uint8_t zl                       : 1;
+  uint8_t zh                       : 1;
+  uint8_t d6d_ia                   : 1;
+  uint8_t den_drdy                 : 1;
+} lsm6dso_d6d_src_t;
+
+#define LSM6DSO_STATUS_REG                   0x1EU
+typedef struct {
+  uint8_t xlda                     : 1;
+  uint8_t gda                      : 1;
+  uint8_t tda                      : 1;
+  uint8_t not_used_01              : 5;
+} lsm6dso_status_reg_t;
+
+#define LSM6DSO_OUT_TEMP_L                   0x20U
+#define LSM6DSO_OUT_TEMP_H                   0x21U
+#define LSM6DSO_OUTX_L_G                     0x22U
+#define LSM6DSO_OUTX_H_G                     0x23U
+#define LSM6DSO_OUTY_L_G                     0x24U
+#define LSM6DSO_OUTY_H_G                     0x25U
+#define LSM6DSO_OUTZ_L_G                     0x26U
+#define LSM6DSO_OUTZ_H_G                     0x27U
+#define LSM6DSO_OUTX_L_A                     0x28U
+#define LSM6DSO_OUTX_H_A                     0x29U
+#define LSM6DSO_OUTY_L_A                     0x2AU
+#define LSM6DSO_OUTY_H_A                     0x2BU
+#define LSM6DSO_OUTZ_L_A                     0x2CU
+#define LSM6DSO_OUTZ_H_A                     0x2DU
+#define LSM6DSO_EMB_FUNC_STATUS_MAINPAGE     0x35U
+typedef struct {
+  uint8_t not_used_01             : 3;
+  uint8_t is_step_det             : 1;
+  uint8_t is_tilt                 : 1;
+  uint8_t is_sigmot               : 1;
+  uint8_t not_used_02             : 1;
+  uint8_t is_fsm_lc               : 1;
+} lsm6dso_emb_func_status_mainpage_t;
+
+#define LSM6DSO_FSM_STATUS_A_MAINPAGE        0x36U
+typedef struct {
+  uint8_t is_fsm1                 : 1;
+  uint8_t is_fsm2                 : 1;
+  uint8_t is_fsm3                 : 1;
+  uint8_t is_fsm4                 : 1;
+  uint8_t is_fsm5                 : 1;
+  uint8_t is_fsm6                 : 1;
+  uint8_t is_fsm7                 : 1;
+  uint8_t is_fsm8                 : 1;
+} lsm6dso_fsm_status_a_mainpage_t;
+
+#define LSM6DSO_FSM_STATUS_B_MAINPAGE        0x37U
+typedef struct {
+  uint8_t is_fsm9                 : 1;
+  uint8_t is_fsm10                : 1;
+  uint8_t is_fsm11                : 1;
+  uint8_t is_fsm12                : 1;
+  uint8_t is_fsm13                : 1;
+  uint8_t is_fsm14                : 1;
+  uint8_t is_fsm15                : 1;
+  uint8_t is_fsm16                : 1;
+} lsm6dso_fsm_status_b_mainpage_t;
+
+#define LSM6DSO_STATUS_MASTER_MAINPAGE       0x39U
+typedef struct {
+  uint8_t sens_hub_endop          : 1;
+  uint8_t not_used_01             : 2;
+  uint8_t slave0_nack             : 1;
+  uint8_t slave1_nack             : 1;
+  uint8_t slave2_nack             : 1;
+  uint8_t slave3_nack             : 1;
+  uint8_t wr_once_done            : 1;
+} lsm6dso_status_master_mainpage_t;
+
+#define LSM6DSO_FIFO_STATUS1                 0x3AU
+typedef struct {
+  uint8_t diff_fifo                : 8;
+} lsm6dso_fifo_status1_t;
+
+#define LSM6DSO_FIFO_STATUS2                 0x3B
+typedef struct {
+  uint8_t diff_fifo                : 2;
+  uint8_t not_used_01              : 1;
+  uint8_t over_run_latched         : 1;
+  uint8_t counter_bdr_ia           : 1;
+  uint8_t fifo_full_ia             : 1;
+  uint8_t fifo_ovr_ia              : 1;
+  uint8_t fifo_wtm_ia              : 1;
+} lsm6dso_fifo_status2_t;
 
 #define LSM6DSO_FSM_ENABLE_A                 0x46U
 typedef struct {
@@ -467,6 +607,75 @@ typedef struct {
   uint8_t mlc7          : 1; /* mlc 7 interrupt event */
   uint8_t mlc8          : 1; /* mlc 8 interrupt event */
 } lsm6dso_pin_int2_route_t;
+
+typedef struct {
+  uint8_t drdy_xl          :  1; /* Accelerometer data ready */
+  uint8_t drdy_g           :  1; /* Gyroscope data ready */
+  uint8_t drdy_temp        :  1; /* Temperature data ready */
+  uint8_t den_flag         :  1; /* external trigger level recognition (DEN) */
+  uint8_t timestamp        :  1; /* timestamp overflow (1 = int2 pin disable) */
+  uint8_t free_fall        :  1; /* free fall event */
+  uint8_t wake_up          :  1; /* wake up event */
+  uint8_t wake_up_z        :  1; /* wake up on Z axis event */
+  uint8_t wake_up_y        :  1; /* wake up on Y axis event */
+  uint8_t wake_up_x        :  1; /* wake up on X axis event */
+  uint8_t single_tap       :  1; /* single-tap event */
+  uint8_t double_tap       :  1; /* double-tap event */
+  uint8_t tap_z            :  1; /* single-tap on Z axis event */
+  uint8_t tap_y            :  1; /* single-tap on Y axis event */
+  uint8_t tap_x            :  1; /* single-tap on X axis event */
+  uint8_t tap_sign         :  1; /* sign of tap event (0-pos / 1-neg) */
+  uint8_t six_d            :  1; /* orientation change (6D/4D detection) */
+  uint8_t six_d_xl         :  1; /* X-axis low 6D/4D event (under threshold) */
+  uint8_t six_d_xh         :  1; /* X-axis high 6D/4D event (over threshold) */
+  uint8_t six_d_yl         :  1; /* Y-axis low 6D/4D event (under threshold) */
+  uint8_t six_d_yh         :  1; /* Y-axis high 6D/4D event (over threshold) */
+  uint8_t six_d_zl         :  1; /* Z-axis low 6D/4D event (under threshold) */
+  uint8_t six_d_zh         :  1; /* Z-axis high 6D/4D event (over threshold) */
+  uint8_t sleep_change     :  1; /* Act/Inact (or Vice-versa) status changed */
+  uint8_t sleep_state      :  1; /* Act/Inact status flag (0-Act / 1-Inact) */
+  uint8_t step_detector    :  1; /* Step detected */
+  uint8_t tilt             :  1; /* Relative tilt event detected */
+  uint8_t sig_mot          :  1; /* "significant motion" event detected */
+  uint8_t fsm_lc           :  1; /* fsm long counter timeout interrupt event */
+  uint8_t fsm1             :  1; /* fsm 1 interrupt event */
+  uint8_t fsm2             :  1; /* fsm 2 interrupt event */
+  uint8_t fsm3             :  1; /* fsm 3 interrupt event */
+  uint8_t fsm4             :  1; /* fsm 4 interrupt event */
+  uint8_t fsm5             :  1; /* fsm 5 interrupt event */
+  uint8_t fsm6             :  1; /* fsm 6 interrupt event */
+  uint8_t fsm7             :  1; /* fsm 7 interrupt event */
+  uint8_t fsm8             :  1; /* fsm 8 interrupt event */
+  uint8_t fsm9             :  1; /* fsm 9 interrupt event */
+  uint8_t fsm10            :  1; /* fsm 10 interrupt event */
+  uint8_t fsm11            :  1; /* fsm 11 interrupt event */
+  uint8_t fsm12            :  1; /* fsm 12 interrupt event */
+  uint8_t fsm13            :  1; /* fsm 13 interrupt event */
+  uint8_t fsm14            :  1; /* fsm 14 interrupt event */
+  uint8_t fsm15            :  1; /* fsm 15 interrupt event */
+  uint8_t fsm16            :  1; /* fsm 16 interrupt event */
+  uint8_t mlc1             :  1; /* mlc 1 interrupt event */
+  uint8_t mlc2             :  1; /* mlc 2 interrupt event */
+  uint8_t mlc3             :  1; /* mlc 3 interrupt event */
+  uint8_t mlc4             :  1; /* mlc 4 interrupt event */
+  uint8_t mlc5             :  1; /* mlc 5 interrupt event */
+  uint8_t mlc6             :  1; /* mlc 6 interrupt event */
+  uint8_t mlc7             :  1; /* mlc 7 interrupt event */
+  uint8_t mlc8             :  1; /* mlc 8 interrupt event */
+  uint8_t sh_endop         :  1; /* sensor hub end operation */
+  uint8_t sh_slave0_nack   :  1; /* Not acknowledge on sensor hub slave 0 */
+  uint8_t sh_slave1_nack   :  1; /* Not acknowledge on sensor hub slave 1 */
+  uint8_t sh_slave2_nack   :  1; /* Not acknowledge on sensor hub slave 2 */
+  uint8_t sh_slave3_nack   :  1; /* Not acknowledge on sensor hub slave 3 */
+  uint8_t sh_wr_once       :  1; /* "WRITE_ONCE" end on sensor hub slave 0 */
+  uint16_t fifo_diff       : 10; /* Number of unread sensor data in FIFO*/
+  uint8_t fifo_ovr_latched :  1; /* Latched FIFO overrun status */
+  uint8_t fifo_bdr         :  1; /* FIFO Batch counter threshold reached */
+  uint8_t fifo_full        :  1; /* FIFO full */
+  uint8_t fifo_ovr         :  1; /* FIFO overrun */
+  uint8_t fifo_th          :  1; /* FIFO threshold reached */
+} lsm6dso_all_sources_t;
+
 //*****************************************************************************
 //
 // External function definitions
