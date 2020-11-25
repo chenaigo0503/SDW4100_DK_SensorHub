@@ -69,6 +69,15 @@ typedef struct {
 #define PROPERTY_DISABLE                (0U)
 #define PROPERTY_ENABLE                 (1U)
 
+#define LSM6DSO_COUNTER_BDR_REG1             0x0BU
+typedef struct {
+  uint8_t cnt_bdr_th               : 3;
+  uint8_t not_used_01              : 2;
+  uint8_t trig_counter_bdr         : 1;
+  uint8_t rst_counter_bdr          : 1;
+  uint8_t dataready_pulsed         : 1;
+} lsm6dso_counter_bdr_reg1_t;
+
 #define LSM6DSO_EMB_FUNC_INT1                0x0AU
 typedef struct {
   uint8_t not_used_01              : 3;
@@ -561,6 +570,54 @@ typedef struct {
   uint8_t mlc7          : 1; /* mlc 7 interrupt event */
   uint8_t mlc8          : 1; /* mlc 8 interrupt event */
 } lsm6dso_pin_int1_route_t;
+typedef enum {
+  LSM6DSO_int1_drdy_xl,
+  LSM6DSO_int1_drdy_g,
+  LSM6DSO_int1_drdy_temp,
+  LSM6DSO_int1_boot,
+  LSM6DSO_int1_fifo_th,
+  LSM6DSO_int1_fifo_ovr,
+  LSM6DSO_int1_fifo_full,
+  LSM6DSO_int1_fifo_bdr,
+  LSM6DSO_int1_den_flag,
+  LSM6DSO_int1_sh_endop,
+  LSM6DSO_int1_timestamp,
+  LSM6DSO_int1_six_d,
+  LSM6DSO_int1_double_tap,
+  LSM6DSO_int1_free_fall,
+  LSM6DSO_int1_wake_up,
+  LSM6DSO_int1_single_tap,
+  LSM6DSO_int1_sleep_change,
+  LSM6DSO_int1_step_detector,
+  LSM6DSO_int1_tilt,
+  LSM6DSO_int1_sig_mot,
+  LSM6DSO_int1_fsm_lc,
+  LSM6DSO_int1_fsm1,
+  LSM6DSO_int1_fsm2,
+  LSM6DSO_int1_fsm3,
+  LSM6DSO_int1_fsm4,
+  LSM6DSO_int1_fsm5,
+  LSM6DSO_int1_fsm6,
+  LSM6DSO_int1_fsm7,
+  LSM6DSO_int1_fsm8,
+  LSM6DSO_int1_fsm9,
+  LSM6DSO_int1_fsm10,
+  LSM6DSO_int1_fsm11,
+  LSM6DSO_int1_fsm12,
+  LSM6DSO_int1_fsm13,
+  LSM6DSO_int1_fsm14,
+  LSM6DSO_int1_fsm15,
+  LSM6DSO_int1_fsm16,
+  LSM6DSO_int1_mlc1,
+  LSM6DSO_int1_mlc2,
+  LSM6DSO_int1_mlc3,
+  LSM6DSO_int1_mlc4,
+  LSM6DSO_int1_mlc5,
+  LSM6DSO_int1_mlc6,
+  LSM6DSO_int1_mlc7,
+  LSM6DSO_int1_mlc8,
+  LSM6DSO_int1_all,
+} lsm6dso_int1_type_t;
 
 typedef struct {
   uint8_t drdy_ois      : 1; /* OIS chain data ready */
@@ -607,6 +664,52 @@ typedef struct {
   uint8_t mlc7          : 1; /* mlc 7 interrupt event */
   uint8_t mlc8          : 1; /* mlc 8 interrupt event */
 } lsm6dso_pin_int2_route_t;
+typedef enum {
+  LSM6DSO_int2_drdy_ois,
+  LSM6DSO_int2_drdy_xl,
+  LSM6DSO_int2_drdy_g,
+  LSM6DSO_int2_drdy_temp,
+  LSM6DSO_int2_fifo_th,
+  LSM6DSO_int2_fifo_ovr,
+  LSM6DSO_int2_fifo_full,
+  LSM6DSO_int2_fifo_bdr,
+  LSM6DSO_int2_timestamp,
+  LSM6DSO_int2_six_d,
+  LSM6DSO_int2_double_tap,
+  LSM6DSO_int2_free_fall,
+  LSM6DSO_int2_wake_up,
+  LSM6DSO_int2_single_tap,
+  LSM6DSO_int2_sleep_change,
+  LSM6DSO_int2_step_detector,
+  LSM6DSO_int2_tilt,
+  LSM6DSO_int2_sig_mot,
+  LSM6DSO_int2_fsm_lc,
+  LSM6DSO_int2_fsm1,
+  LSM6DSO_int2_fsm2,
+  LSM6DSO_int2_fsm3,
+  LSM6DSO_int2_fsm4,
+  LSM6DSO_int2_fsm5,
+  LSM6DSO_int2_fsm6,
+  LSM6DSO_int2_fsm7,
+  LSM6DSO_int2_fsm8,
+  LSM6DSO_int2_fsm9,
+  LSM6DSO_int2_fsm10,
+  LSM6DSO_int2_fsm11,
+  LSM6DSO_int2_fsm12,
+  LSM6DSO_int2_fsm13,
+  LSM6DSO_int2_fsm14,
+  LSM6DSO_int2_fsm15,
+  LSM6DSO_int2_fsm16,
+  LSM6DSO_int2_mlc1,
+  LSM6DSO_int2_mlc2,
+  LSM6DSO_int2_mlc3,
+  LSM6DSO_int2_mlc4,
+  LSM6DSO_int2_mlc5,
+  LSM6DSO_int2_mlc6,
+  LSM6DSO_int2_mlc7,
+  LSM6DSO_int2_mlc8,
+  LSM6DSO_int2_all,
+} lsm6dso_int2_type_t;
 
 typedef struct {
   uint8_t drdy_xl          :  1; /* Accelerometer data ready */
@@ -676,6 +779,11 @@ typedef struct {
   uint8_t fifo_th          :  1; /* FIFO threshold reached */
 } lsm6dso_all_sources_t;
 
+typedef enum {
+  LSM6DSO_DRDY_LATCHED = 0,
+  LSM6DSO_DRDY_PULSED  = 1,
+} lsm6dso_dataready_pulsed_t;
+
 //*****************************************************************************
 //
 // External function definitions
@@ -686,6 +794,8 @@ void lsm6dso_fsm_enable_get(stmdev_ctx_t *ctx,
                                lsm6dso_emb_fsm_enable_t *val);
 void lsm6dso_fsm_data_rate_get(stmdev_ctx_t *ctx, lsm6dso_fsm_odr_t *val);
 void lsm6dso_mem_bank_set(stmdev_ctx_t *ctx, lsm6dso_reg_access_t val);
+void lsm6dso_int1_route_set(lsm6dso_int1_type_t int1_type, bool int1_val);
+void lsm6dso_int2_route_set(lsm6dso_int2_type_t int2_type, bool int2_val);
 
 #ifdef __cplusplus
 }
