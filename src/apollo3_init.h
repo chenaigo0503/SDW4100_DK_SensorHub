@@ -38,8 +38,19 @@ extern void* g_IOMArray[6];
 // HW VER v1 Not use SWO
 #define APOLLO3_HUB_VER 1
 
+// Maximum number of task list
+#define APOLLO_TASK_FUNMAX  16
+
 // apollo3_init
 void apollo3_init(void);
 void inform_host(void);
+
+// task list API
+void task_list_insert(void (*taskhandle)(void));
+void task_list_remove(void (*taskhandle)(void));
+uint8_t task_list_num_get(void);
+void empty_task_list(void);
+void call_task_list(void);
+
 
 #endif // APOLLO3_INIT_H

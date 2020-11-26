@@ -85,6 +85,7 @@ static uint8_t apollo_message_len[256] = {
 // function
 int unpack_data(uint8_t* message_pack);
 uint8_t send_resp_msg(uint8_t msg_id);
+uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data);
 int sensor_event_enquene(uint8_t mid, uint8_t* sns_data, uint16_t sns_len);
 void msg_dequene(void);
 

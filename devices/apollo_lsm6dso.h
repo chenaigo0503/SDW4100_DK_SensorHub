@@ -797,6 +797,10 @@ void lsm6dso_mem_bank_set(stmdev_ctx_t *ctx, lsm6dso_reg_access_t val);
 void lsm6dso_int1_route_set(lsm6dso_int1_type_t int1_type, bool int1_val);
 void lsm6dso_int2_route_set(lsm6dso_int2_type_t int2_type, bool int2_val);
 
+// The function that needs to be put into the loop task call
+uint8_t lsm6dso_acceleration_get(float* acc_data);
+uint8_t lsm6dso_angular_get(float* gyro_data);
+
 #ifdef __cplusplus
 }
 #endif

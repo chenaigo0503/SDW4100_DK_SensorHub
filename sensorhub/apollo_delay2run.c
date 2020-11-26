@@ -66,7 +66,7 @@ static void delay2run_handle(void)
     // Function processing completed, stop the timer
     if (!d2rIs)
     {
-        PR_INFO("Function processing completed, stop the timer.");
+        PR_INFO("Completed, stop the timer.");
         am_hal_ctimer_stop(APOLLO_DELAY2RUN_TIMERNUM, APOLLO_DELAY2RUN_TIMERSEG);
         d2rTimerRun = false;
     }
@@ -111,7 +111,18 @@ void delay_to_run(uint16_t delayMs, void(*d2r_handle)(void*), void* inPara)
 
     for(i = 0; i < APOLLO_DELAY2RUN_FUNMAX; i++)
     {
-        if (d2r_array[i].waitNum == 0 && d2r_array[i].d2r_fun == NULL)
+        // add this can increase the execution time
+        if (d2r_array[i].d2r_fun == d2r_handle)
+        {
+            d2r_array[i].waitNum = (delayMs / 50) + 1;
+            if(delayMs % 50)
+                d2r_array[i].waitNum++;
+            // Parameters will be updated
+            d2r_array[i].inPara = inPara;
+
+            break;
+        }
+        else if (d2r_array[i].waitNum == 0 && d2r_array[i].d2r_fun == NULL)
         {
             d2r_array[i].waitNum = (delayMs / 50);
             if(delayMs % 50)

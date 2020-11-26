@@ -31,15 +31,12 @@
 stmdev_ctx_t g_Lsm6dsoCtx;
 static uint32_t lsmBuffer[2];
 
-
 typedef union{
   int16_t i16bit[3];
   uint8_t u8bit[6];
 } axis3bit16_t;
 static axis3bit16_t data_raw_acceleration;
 static axis3bit16_t data_raw_angular_rate;
-static float acceleration_mg[3];
-static float angular_rate_mdps[3];
 /**
   * @defgroup  LSM6DSOX_Private_functions
   * @brief     Section collect all the utility functions needed by APIs.
@@ -1234,7 +1231,7 @@ void lsm6dso_angular_rate_raw_get(stmdev_ctx_t *ctx, uint8_t *buff)
 
 /**
   * @brief  Linear acceleration output register.
-  *         The value is expressed as a 16-bit word in two’s complement.[get]
+  *         The value is expressed as a 16-bit word in two's complement.[get]
   *
   * @param  ctx      read / write interface definitions
   * @param  buff     buffer that stores data read
@@ -1378,52 +1375,6 @@ void lsm6dso_init(void)
     /* Disable interrupt generation on INT pin */
     lsm6dso_int1_route_set(LSM6DSO_int1_all, 0);
     lsm6dso_int2_route_set(LSM6DSO_int2_all, 0);
-
-#if 0
-  /* Wait samples */
-  while(1)
-  {
-    uint8_t reg;
-
-    /* Read output only if new xl value is available */
-    lsm6dso_xl_flag_data_ready_get(&g_Lsm6dsoCtx, &reg);
-    if (reg)
-    {
-      /* Read acceleration field data */
-      memset(data_raw_acceleration.u8bit, 0x00, 3 * sizeof(int16_t));
-      lsm6dso_acceleration_raw_get(&g_Lsm6dsoCtx, data_raw_acceleration.u8bit);
-      acceleration_mg[0] =
-        lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[0]);
-      acceleration_mg[1] =
-        lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[1]);
-      acceleration_mg[2] =
-        lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[2]);
-
-      //PR_ERR("Acceleration [mg]:%4.2f\t%4.2f\t%4.2f",
-              //acceleration_mg[0], acceleration_mg[1], acceleration_mg[2]);
-        pr_err("x1=%4.2f,x2=%4.2f,x3=%4.2f\r\n",acceleration_mg[0], acceleration_mg[1], acceleration_mg[2]);
-    }
-
-    /* Read output only if new gyro value is available */
-    lsm6dso_gy_flag_data_ready_get(&g_Lsm6dsoCtx, &reg);
-    if (reg)
-    {
-      /* Read angular rate field data */
-      memset(data_raw_angular_rate.u8bit, 0x00, 3 * sizeof(int16_t));
-      lsm6dso_angular_rate_raw_get(&g_Lsm6dsoCtx, data_raw_angular_rate.u8bit);
-      angular_rate_mdps[0] =
-        lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[0]);
-      angular_rate_mdps[1] =
-        lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[1]);
-      angular_rate_mdps[2] =
-        lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[2]);
-
-      //PR_ERR("Angular rate [mdps]:%4.2f\t%4.2f\t%4.2f\r\n",
-              //angular_rate_mdps[0], angular_rate_mdps[1], angular_rate_mdps[2]);
-        pr_err("x4=%4.2f,x5=%4.2f,x6=%4.2f\r\n", angular_rate_mdps[0], angular_rate_mdps[1], angular_rate_mdps[2]);
-    }
-  }
-#endif
 }
 
 /**
@@ -1550,511 +1501,60 @@ void lsm6dso_int2_route_set(lsm6dso_int2_type_t int2_type, bool int2_val)
 
     lsm6dso_pin_int2_route_set(&g_Lsm6dsoCtx, NULL, m_int2_route);
 }
-#if 0
-//*****************************************************************************
-//
-//! @brief Disables an array of LEDs
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32NumLEDs is the total number of LEDs in the array.
-//!
-//! This function disables the GPIOs for an array of LEDs.
-//!
-//! @return None.
-//
-//*****************************************************************************
-void
-am_devices_led_array_disable(am_devices_led_t *psLEDs, uint32_t ui32NumLEDs)
+
+// External call function
+uint8_t lsm6dso_acceleration_get(float* acc_data)
 {
-    if ( (psLEDs == NULL)                       ||
-         (ui32NumLEDs > MAX_LEDS) )
+    uint8_t reg = 0;
+
+    if (acc_data == NULL)
+        return 1;
+
+    /* Read output only if new xl value is available */
+    lsm6dso_xl_flag_data_ready_get(&g_Lsm6dsoCtx, &reg);
+    if (reg)
     {
-        return;
+        /* Read acceleration field data */
+        memset(data_raw_acceleration.u8bit, 0x00, 3 * sizeof(int16_t));
+        lsm6dso_acceleration_raw_get(&g_Lsm6dsoCtx, data_raw_acceleration.u8bit);
+        acc_data[0] = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[0]);
+        acc_data[1] = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[1]);
+        acc_data[2] = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[2]);
+
+        //pr_err("x1=%4.2f,x2=%4.2f,x3=%4.2f\r\n",acc_data[0], acc_data[1], acc_data[2]);
+
+        return 0;
     }
-
-    //
-    // Loop through the list of LEDs, configuring each one individually.
-    //
-    for ( uint32_t i = 0; i < ui32NumLEDs; i++ )
+    else
     {
-        if ( psLEDs[i].ui32GPIONumber >= AM_HAL_GPIO_MAX_PADS )
-        {
-            continue;
-        }
-
-#if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
-        am_hal_gpio_pinconfig((psLEDs + i)->ui32GPIONumber, am_hal_gpio_pincfg_disabled);
-#else
-#if AM_APOLLO3_GPIO
-        am_hal_gpio_pinconfig((psLEDs + i)->ui32GPIONumber, g_AM_HAL_GPIO_DISABLE);
-#else // AM_APOLLO3_GPIO
-        am_hal_gpio_pin_config((psLEDs + i)->ui32GPIONumber, AM_HAL_GPIO_DISABLE);
-#endif // AM_APOLLO3_GPIO
-#endif
+        return 2;
     }
 }
 
-//*****************************************************************************
-//
-//! @brief Configures the necessary pins for an array of LEDs
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32NumLEDs is the total number of LEDs in the array.
-//!
-//! This function configures the GPIOs for an array of LEDs.
-//!
-//! @return None.
-//
-//*****************************************************************************
-void
-am_devices_led_array_init(am_devices_led_t *psLEDs, uint32_t ui32NumLEDs)
+uint8_t lsm6dso_angular_get(float* gyro_data)
 {
-    uint32_t i;
+    uint8_t reg = 0;
 
-    if ( (psLEDs == NULL)                       ||
-         (ui32NumLEDs > MAX_LEDS) )
+    if (gyro_data == NULL)
+        return 1;
+
+    /* Read output only if new gyro value is available */
+    lsm6dso_gy_flag_data_ready_get(&g_Lsm6dsoCtx, &reg);
+    if (reg)
     {
-        return;
+        /* Read angular rate field data */
+        memset(data_raw_angular_rate.u8bit, 0x00, 3 * sizeof(int16_t));
+        lsm6dso_angular_rate_raw_get(&g_Lsm6dsoCtx, data_raw_angular_rate.u8bit);
+        gyro_data[0] = lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[0]);
+        gyro_data[1] = lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[1]);
+        gyro_data[2] = lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[2]);
+
+        //pr_err("x4=%4.2f,x5=%4.2f,x6=%4.2f\r\n", gyro_data[0], gyro_data[1], gyro_data[2]);
+        
+        return 0;
     }
-
-    //
-    // Loop through the list of LEDs, configuring each one individually.
-    //
-    for ( i = 0; i < ui32NumLEDs; i++ )
+    else
     {
-        am_devices_led_init(psLEDs + i);
+        return 2;
     }
 }
-
-//*****************************************************************************
-//
-//! @brief Turns on the requested LED.
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32LEDNum is the LED number for the light to turn on.
-//!
-//! This function turns on a single LED.
-//!
-//! @return None.
-//
-//*****************************************************************************
-void
-am_devices_led_on(am_devices_led_t *psLEDs, uint32_t ui32LEDNum)
-{
-    if ( (psLEDs == NULL)                       ||
-         (ui32LEDNum >= MAX_LEDS)               ||
-         (psLEDs[ui32LEDNum].ui32GPIONumber >= AM_HAL_GPIO_MAX_PADS) )
-    {
-        return;
-    }
-
-#if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                psLEDs[ui32LEDNum].ui32Polarity & AM_DEVICES_LED_POL_POLARITY_M ?
-                                AM_HAL_GPIO_OUTPUT_SET : AM_HAL_GPIO_OUTPUT_CLEAR);
-    }
-    else
-    {
-        //
-        // Turn on the output driver for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TRISTATE_ENABLE);
-    }
-#else
-#if (1 == AM_APOLLO3_GPIO)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                psLEDs[ui32LEDNum].ui32Polarity & AM_DEVICES_LED_POL_POLARITY_M ?
-                                AM_HAL_GPIO_OUTPUT_SET : AM_HAL_GPIO_OUTPUT_CLEAR);
-    }
-    else
-    {
-        //
-        // Turn on the output driver for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TRISTATE_ENABLE);
-    }
-#else // AM_APOLLO3_GPIO
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_out_bit_replace(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                    psLEDs[ui32LEDNum].ui32Polarity &
-                                    AM_DEVICES_LED_POL_POLARITY_M );
-    }
-    else
-    {
-        //
-        // Turn on the output driver for the LED.
-        //
-        am_hal_gpio_out_enable_bit_set(psLEDs[ui32LEDNum].ui32GPIONumber);
-    }
-#endif // AM_APOLLO3_GPIO
-#endif
-}
-
-//*****************************************************************************
-//
-//! @brief Turns off the requested LED.
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32LEDNum is the LED number for the light to turn off.
-//!
-//! This function turns off a single LED.
-//!
-//! @return None.
-//
-//*****************************************************************************
-void
-am_devices_led_off(am_devices_led_t *psLEDs, uint32_t ui32LEDNum)
-{
-    if ( (psLEDs == NULL)                       ||
-         (ui32LEDNum >= MAX_LEDS)               ||
-         (psLEDs[ui32LEDNum].ui32GPIONumber >= AM_HAL_GPIO_MAX_PADS) )
-    {
-        return;
-    }
-
-#if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                psLEDs[ui32LEDNum].ui32Polarity & AM_DEVICES_LED_POL_POLARITY_M ?
-                                AM_HAL_GPIO_OUTPUT_CLEAR : AM_HAL_GPIO_OUTPUT_SET);
-    }
-    else
-    {
-        //
-        // Turn off the output driver for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
-    }
-#else
-#if (1 == AM_APOLLO3_GPIO)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                psLEDs[ui32LEDNum].ui32Polarity & AM_DEVICES_LED_POL_POLARITY_M ?
-                                AM_HAL_GPIO_OUTPUT_CLEAR : AM_HAL_GPIO_OUTPUT_SET);
-    }
-    else
-    {
-        //
-        // Turn off the output driver for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
-    }
-#else // AM_APOLLO3_GPIO
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_out_bit_replace(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                    !(psLEDs[ui32LEDNum].ui32Polarity &
-                                      AM_DEVICES_LED_POL_POLARITY_M) );
-    }
-    else
-    {
-        //
-        // Turn off the output driver for the LED.
-        //
-        am_hal_gpio_out_enable_bit_clear(psLEDs[ui32LEDNum].ui32GPIONumber);
-    }
-#endif // AM_APOLLO3_GPIO
-#endif
-}
-
-//*****************************************************************************
-//
-//! @brief Toggles the requested LED.
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32LEDNum is the LED number for the light to toggle.
-//!
-//! This function toggles a single LED.
-//!
-//! @return None.
-//
-//*****************************************************************************
-void
-am_devices_led_toggle(am_devices_led_t *psLEDs, uint32_t ui32LEDNum)
-{
-    if ( (psLEDs == NULL)                       ||
-         (ui32LEDNum >= MAX_LEDS)               ||
-         (psLEDs[ui32LEDNum].ui32GPIONumber >= AM_HAL_GPIO_MAX_PADS) )
-    {
-        return;
-    }
-
-#if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TOGGLE);
-    }
-    else
-    {
-        uint32_t ui32Ret, ui32Value;
-
-        //
-        // Check to see if the LED pin is enabled.
-        //
-        ui32Ret = am_hal_gpio_state_read(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                         AM_HAL_GPIO_ENABLE_READ, &ui32Value);
-
-        if ( ui32Ret == AM_HAL_STATUS_SUCCESS )
-        {
-            if ( ui32Value )
-            {
-                //
-                // If it was enabled, turn if off.
-                //
-                am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                        AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
-            }
-            else
-            {
-                //
-                // If it was not enabled, turn it on.
-                //
-                am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                        AM_HAL_GPIO_OUTPUT_TRISTATE_ENABLE);
-            }
-        }
-    }
-#else
-#if (1 == AM_APOLLO3_GPIO)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TOGGLE);
-    }
-    else
-    {
-        uint32_t ui32Ret, ui32Value;
-
-        //
-        // Check to see if the LED pin is enabled.
-        //
-        ui32Ret = am_hal_gpio_state_read(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                         AM_HAL_GPIO_ENABLE_READ, &ui32Value);
-
-        if ( ui32Ret == AM_HAL_STATUS_SUCCESS )
-        {
-            if ( ui32Value )
-            {
-                //
-                // If it was enabled, turn if off.
-                //
-                am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                        AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
-            }
-            else
-            {
-                //
-                // If it was not enabled, turn it on.
-                //
-                am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                        AM_HAL_GPIO_OUTPUT_TRISTATE_ENABLE);
-            }
-        }
-    }
-#else // AM_APOLLO3_GPIO
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        am_hal_gpio_out_bit_toggle(psLEDs[ui32LEDNum].ui32GPIONumber);
-    }
-    else
-    {
-        //
-        // Check to see if the LED pin is enabled.
-        //
-        if ( am_hal_gpio_out_enable_bit_get(psLEDs[ui32LEDNum].ui32GPIONumber) )
-        {
-            //
-            // If it was enabled, turn if off.
-            //
-            am_hal_gpio_out_enable_bit_clear(psLEDs[ui32LEDNum].ui32GPIONumber);
-        }
-        else
-        {
-            //
-            // If it was not enabled, turn if on.
-            //
-            am_hal_gpio_out_enable_bit_set(psLEDs[ui32LEDNum].ui32GPIONumber);
-        }
-    }
-#endif // AM_APOLLO3_GPIO
-#endif
-}
-
-//*****************************************************************************
-//
-//! @brief Gets the state of the requested LED.
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32LEDNum is the LED to check.
-//!
-//! This function checks the state of a single LED.
-//!
-//! @return true if the LED is on.
-//
-//*****************************************************************************
-bool
-am_devices_led_get(am_devices_led_t *psLEDs, uint32_t ui32LEDNum)
-{
-    if ( (psLEDs == NULL)                       ||
-         (ui32LEDNum >= MAX_LEDS)               ||
-         (psLEDs[ui32LEDNum].ui32GPIONumber >= AM_HAL_GPIO_MAX_PADS) )
-    {
-        return false;   // No error return, so return as off
-    }
-
-#if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
-    uint32_t ui32Ret, ui32Value;
-    am_hal_gpio_read_type_e eReadType;
-
-    eReadType = AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity ?
-                AM_HAL_GPIO_OUTPUT_READ : AM_HAL_GPIO_ENABLE_READ;
-
-    ui32Ret = am_hal_gpio_state_read(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                     eReadType, &ui32Value);
-
-    if ( ui32Ret == AM_HAL_STATUS_SUCCESS )
-    {
-        return (bool)ui32Value;
-    }
-    else
-    {
-        return false;
-    }
-#else
-#if (1 == AM_APOLLO3_GPIO)
-    uint32_t ui32Ret, ui32Value;
-    am_hal_gpio_read_type_e eReadType;
-
-    eReadType = AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity ?
-                AM_HAL_GPIO_OUTPUT_READ : AM_HAL_GPIO_ENABLE_READ;
-
-    ui32Ret = am_hal_gpio_state_read(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                     eReadType, &ui32Value);
-
-    if ( ui32Ret == AM_HAL_STATUS_SUCCESS )
-    {
-        return (bool)ui32Value;
-    }
-    else
-    {
-        return false;
-    }
-#else // AM_APOLLO3_GPIO
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Mask to the GPIO bit position for this GPIO number.
-        //
-        uint64_t ui64Mask = ((uint64_t)0x01l) << psLEDs[ui32LEDNum].ui32GPIONumber;
-
-        //
-        // Extract the state of this bit and return it.
-        //
-        return !!(am_hal_gpio_out_read() & ui64Mask);
-    }
-    else
-    {
-        return am_hal_gpio_out_enable_bit_get(psLEDs[ui32LEDNum].ui32GPIONumber);
-    }
-#endif // AM_APOLLO3_GPIO
-#endif
-}
-
-//*****************************************************************************
-//
-//! @brief Display a binary value using LEDs.
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32NumLEDs is the number of LEDs in the array.
-//! @param ui32Value is the value to display on the LEDs.
-//!
-//! This function displays a value in binary across an array of LEDs.
-//!
-//! @return true if the LED is on.
-//
-//*****************************************************************************
-void
-am_devices_led_array_out(am_devices_led_t *psLEDs, uint32_t ui32NumLEDs,
-                         uint32_t ui32Value)
-{
-    uint32_t i;
-
-    for ( i = 0; i < ui32NumLEDs; i++ )
-    {
-        if ( ui32Value & (1 << i) )
-        {
-            am_devices_led_on(psLEDs, i);
-        }
-        else
-        {
-            am_devices_led_off(psLEDs, i);
-        }
-    }
-}
-//*****************************************************************************
-//
-// End Doxygen group.
-//! @}
-//
-//*****************************************************************************
-#endif

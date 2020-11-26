@@ -133,12 +133,18 @@ void ios_init(void)
 void inform_host(void)
 {
     uint32_t ui32Arg = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
+    uint32_t gpio_state;
     // Update FIFOCTR for host to read
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
     // Interrupt the host
 #if (APOLLO3_HUB_VER == 1)
-    am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_SET);
+    // Just in case the GPIO hasn't pulled down yet
+    am_hal_gpio_state_read(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_READ, &gpio_state);
+    if (gpio_state == 1)
+        am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_CLEAR);
+
     delay_to_run(50, pulldown_iosint, NULL);
+    am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_SET);
 //#else
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_HOST_INTSET, &ui32Arg);
 #endif

@@ -47,6 +47,35 @@ extern uint8_t g_UARTRxBuf2Sta;
 
 //*****************************************************************************
 //
+// Related functions that participate in message management
+//
+//*****************************************************************************
+void get_acc_send_msg(void)
+{
+    float accData[3] = {0};
+
+    if (!lsm6dso_acceleration_get(accData))
+    {
+        send_event_msg(APOLLO_SENSOR_0_EVNT, (uint8_t*)accData);
+
+        inform_host();
+    }
+}
+
+void get_gyro_send_msg(void)
+{
+    float gyroData[3] = {0};
+    
+    if (!lsm6dso_angular_get(gyroData))
+    {
+        send_event_msg(APOLLO_SENSOR_0_EVNT, (uint8_t*)gyroData);
+
+        inform_host();
+    }
+}
+
+//*****************************************************************************
+//
 // Main
 //
 //*****************************************************************************
@@ -128,6 +157,20 @@ main(void)
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
+                case APOLLO_SENSOR_0_START_CMD:
+                    PR_ERR("will open A sensor");
+
+                    task_list_insert(get_acc_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
+                case APOLLO_SENSOR_1_START_CMD:
+                    PR_ERR("will open G sensor");
+
+                    task_list_insert(get_gyro_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
                 default:
                     PR_ERR("There is no useful mid: 0x%02x", msg_link_quene.front->mid);
                     break;
@@ -144,6 +187,11 @@ main(void)
         {
             PR_ERR("lsm: %x", apollo_irq);
             apollo_irq.lsm_irq1 = 0;
+        }
+        
+        if (task_list_num_get())
+        {
+            call_task_list();
         }
     }
 

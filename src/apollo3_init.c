@@ -23,6 +23,8 @@
 void* g_IOMArray[6] = {0};
 volatile apollo_irq_c_t apollo_irq;
 
+static void (*taskList[APOLLO_TASK_FUNMAX])(void);
+
 //*****************************************************************************
 //
 // apollo3_init
@@ -52,6 +54,78 @@ void apollo3_init(void)
     // Configure the board for low power operation.
     //
     am_bsp_low_power_init();	
+}
+
+// task list API
+void task_list_insert(void (*taskhandle)(void))
+{
+    uint8_t i;
+
+    if (taskhandle == NULL)
+        return;
+
+    if (task_list_num_get() >= APOLLO_TASK_FUNMAX)
+        return;
+    
+    for(i = 0; i < APOLLO_TASK_FUNMAX; i++)
+    {
+        if (!taskList[i])
+            taskList[i] = taskhandle;
+    }
+}
+
+void task_list_remove(void (*taskhandle)(void))
+{
+    uint8_t i;
+
+    if (taskhandle == NULL)
+        return;
+
+    if (task_list_num_get() == 0)
+        return;
+
+    for(i = 0; i < APOLLO_TASK_FUNMAX; i++)
+    {
+        if (taskList[i] == taskhandle)
+            taskList[i] = NULL;
+    }
+}
+
+uint8_t task_list_num_get(void)
+{
+    uint8_t taskListNum = 0;
+    uint8_t i;
+
+    for(i = 0; i < APOLLO_TASK_FUNMAX; i++)
+    {
+        if (taskList[i])
+            taskListNum ++;
+    }
+
+    return taskListNum;
+}
+
+void empty_task_list(void)
+{
+    uint8_t i;
+
+    for(i = 0; i < APOLLO_TASK_FUNMAX; i++)
+    {
+        taskList[i] = NULL;
+    }
+}
+
+void call_task_list(void)
+{
+    uint8_t i;
+
+    if (task_list_num_get() == 0)
+        return;
+
+    for(i = 0; i < APOLLO_TASK_FUNMAX; i++)
+    {
+        taskList[i]();
+    }
 }
 
 //*****************************************************************************
