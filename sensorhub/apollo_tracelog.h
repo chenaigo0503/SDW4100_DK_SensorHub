@@ -17,7 +17,7 @@
 #define APOLLO_LOG_DEBUG 1
 #define APOLLO_LOG_INFO  2
 
-#define END_LINE am_util_stdio_printf("\n")
+#define END_LINE am_util_stdio_printf("\n\r")
 
 #if (APOLLO_LOG_ERROR < APOLLO_LOG_LEVEL)
 #define PR_ERR(...) do{am_util_stdio_printf(__VA_ARGS__);END_LINE;}while(0)

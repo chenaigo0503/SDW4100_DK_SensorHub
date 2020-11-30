@@ -34,6 +34,31 @@ extern "C"
 // sensor ID
 #define BMP280_CHIP_ID3                      UINT8_C(0x58)
 
+/*! @name Return codes */
+/*! @name Success code*/
+#define BMP280_OK                            INT8_C(0)
+#define BMP280_BOND_WIRE_OK                  INT8_C(0)
+
+/*! @name Error codes */
+#define BMP280_E_NULL_PTR                    INT8_C(-1)
+#define BMP280_E_DEV_NOT_FOUND               INT8_C(-2)
+#define BMP280_E_INVALID_LEN                 INT8_C(-3)
+#define BMP280_E_COMM_FAIL                   INT8_C(-4)
+#define BMP280_E_INVALID_MODE                INT8_C(-5)
+#define BMP280_E_BOND_WIRE                   INT8_C(-6)
+#define BMP280_E_IMPLAUS_TEMP                INT8_C(-7)
+#define BMP280_E_IMPLAUS_PRESS               INT8_C(-8)
+#define BMP280_E_CAL_PARAM_RANGE             INT8_C(-9)
+#define BMP280_E_UNCOMP_TEMP_RANGE           INT8_C(-10)
+#define BMP280_E_UNCOMP_PRES_RANGE           INT8_C(-11)
+#define BMP280_E_UNCOMP_TEMP_AND_PRESS_RANGE INT8_C(-12)
+#define BMP280_E_UNCOMP_DATA_CALC            INT8_C(-13)
+#define BMP280_E_32BIT_COMP_TEMP             INT8_C(-14)
+#define BMP280_E_32BIT_COMP_PRESS            INT8_C(-15)
+#define BMP280_E_64BIT_COMP_PRESS            INT8_C(-16)
+#define BMP280_E_DOUBLE_COMP_TEMP            INT8_C(-17)
+#define BMP280_E_DOUBLE_COMP_PRESS           INT8_C(-18)
+
 /*! @name ODR options */
 #define BMP280_ODR_0_5_MS                    UINT8_C(0x00)
 #define BMP280_ODR_62_5_MS                   UINT8_C(0x01)
@@ -166,6 +191,60 @@ extern "C"
 #define BMP280_GET_BITS_POS_0(bitname, reg_data)       (reg_data & \
                                                         (bitname##_MASK))
 
+/*! @brief Macros holding the minimum and maximum for trimming values */
+
+#define BMP280_ST_DIG_T1_MIN UINT16_C(19000)
+#define BMP280_ST_DIG_T1_MAX UINT16_C(35000)
+#define BMP280_ST_DIG_T2_MIN UINT16_C(22000)
+#define BMP280_ST_DIG_T2_MAX UINT16_C(30000)
+#define BMP280_ST_DIG_T3_MIN INT16_C(-3000)
+#define BMP280_ST_DIG_T3_MAX INT16_C(-1000)
+#define BMP280_ST_DIG_P1_MIN UINT16_C(30000)
+#define BMP280_ST_DIG_P1_MAX UINT16_C(42000)
+#define BMP280_ST_DIG_P2_MIN INT16_C(-12970)
+#define BMP280_ST_DIG_P2_MAX INT16_C(-8000)
+#define BMP280_ST_DIG_P3_MIN INT16_C(-5000)
+#define BMP280_ST_DIG_P3_MAX UINT16_C(8000)
+#define BMP280_ST_DIG_P4_MIN INT16_C(-10000)
+#define BMP280_ST_DIG_P4_MAX UINT16_C(18000)
+#define BMP280_ST_DIG_P5_MIN INT16_C(-500)
+#define BMP280_ST_DIG_P5_MAX UINT16_C(1100)
+#define BMP280_ST_DIG_P6_MIN INT16_C(-1000)
+#define BMP280_ST_DIG_P6_MAX UINT16_C(1000)
+#define BMP280_ST_DIG_P7_MIN INT16_C(-32768)
+#define BMP280_ST_DIG_P7_MAX UINT16_C(32767)
+#define BMP280_ST_DIG_P8_MIN INT16_C(-30000)
+#define BMP280_ST_DIG_P8_MAX UINT16_C(10000)
+#define BMP280_ST_DIG_P9_MIN INT16_C(-10000)
+#define BMP280_ST_DIG_P9_MAX UINT16_C(30000)
+
+#define BMP280_GET_BITSLICE(regvar, bitname) \
+    ((regvar & bitname##__MSK) >> bitname##__POS)
+
+/*! @brief Macros to read out API revision number */
+/*Register holding custom trimming values */
+#define BMP280_ST_TRIMCUSTOM_REG             UINT8_C(0x87)
+#define BMP280_ST_TRIMCUSTOM_REG_APIREV__POS UINT8_C(1)
+#define BMP280_ST_TRIMCUSTOM_REG_APIREV__MSK UINT8_C(0x06)
+#define BMP280_ST_TRIMCUSTOM_REG_APIREV__LEN UINT8_C(2)
+#define BMP280_ST_TRIMCUSTOM_REG_APIREV__REG BMP280_ST_TRIMCUSTOM_REG
+
+/* highest API revision supported is revision 0. */
+#define BMP280_ST_MAX_APIREVISION            UINT8_C(0x00)
+
+/*! @brief Macros holding the minimum and maximum for trimming values */
+/* 0x00000 is minimum output value */
+#define BMP280_ST_ADC_T_MIN                  INT32_C(0x00000)
+
+/* 0xFFFF0 is maximum 20-bit output value without over sampling */
+#define BMP280_ST_ADC_T_MAX                  INT32_C(0xFFFF0)
+
+/* 0x00000 is minimum output value */
+#define BMP280_ST_ADC_P_MIN                  INT32_C(0x00000)
+
+/* 0xFFFF0 is maximum 20-bit output value without over sampling */
+#define BMP280_ST_ADC_P_MAX                  INT32_C(0xFFFF0)
+
 /*! @name Calibration parameters' structure */
 struct bmp280_calib_param
 {
@@ -194,12 +273,34 @@ struct bmp280_config
     uint8_t spi3w_en;
 };
 
+/*! @name Sensor status structure */
+struct bmp280_status
+{
+    uint8_t measuring;
+    uint8_t im_update;
+};
+
+/*! @name Uncompensated data structure */
+struct bmp280_uncomp_data
+{
+    int32_t uncomp_temp;
+    uint32_t uncomp_press;
+};
+
 //*****************************************************************************
 //
 // External function definitions
 //
 //*****************************************************************************
 extern void bmp280_init(void);
+void bmp280_get_config(void);
+void bmp280_set_config(void);
+void bmp280_get_status(struct bmp280_status *status);
+void bmp280_get_power_mode(uint8_t *mode);
+void bmp280_get_uncomp_data(struct bmp280_uncomp_data *uncomp_data);
+void bmp280_get_comp_temp_32bit(int32_t *comp_temp, int32_t uncomp_temp);
+void bmp280_get_comp_pres_32bit(uint32_t *comp_pres, uint32_t uncomp_pres);
+void bmp280_set_power_mode(uint8_t mode);
 
 #ifdef __cplusplus
 }

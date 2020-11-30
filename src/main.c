@@ -105,7 +105,7 @@ main(void)
 
     // Print the sw infomation.
     END_LINE;
-    PR_INFO("Apollo 3 Blue for Sensor Hub, SW ver:%02x.%02x.%02x", 0, 0, 10);
+    PR_INFO("Apollo 3 Blue for Sensor Hub, SW ver:%02x.%02x.%02x", APOLLO3_HUB_VER0,APOLLO3_HUB_VER1, APOLLO3_HUB_VER2);
 
     // init amotas
     dump_ota_status();
@@ -142,6 +142,11 @@ main(void)
             PR_DBG("Recive msg queue mid: %d", msg_link_quene.front->mid);
             switch(msg_link_quene.front->mid)
             {
+
+                case APOLLO_GET_VERSION_CMD:
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
                 case APOLLO_FW_UPDATA_CMD:
                     amotas_init();
                     send_resp_msg(msg_link_quene.front->mid);

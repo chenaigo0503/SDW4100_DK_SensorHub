@@ -16,6 +16,7 @@
 #include "crc8.h"
 #include "am_mcu_apollo.h"
 #include "am_util.h"
+#include "apollo3_init.h"
 
 extern void *g_pIOSHandle;
 static uint8_t msg_buf[APOLLO_MSG_MAX];
@@ -128,14 +129,14 @@ uint8_t send_resp_msg(uint8_t msg_id)
     send_msg[1] = APOLLO_HUB_PID;
     if(msg_id == APOLLO_GET_VERSION_CMD)
     {
-        uint8_t ver_msg[9] = {0xAA, 0x01};
-        ver_msg[2] = msg_id + 1;
-        ver_msg[3] = 3;
-        ver_msg[4] = 0;
+        uint8_t ver_msg[8] = {0xAA, 0x01, 0x03, 0x03};
+        ver_msg[4] = APOLLO3_HUB_VER0;
+        ver_msg[5] = APOLLO3_HUB_VER1;
+        ver_msg[6] = APOLLO3_HUB_VER2;
 
         //get version
         //ver_msg[5],ver_msg[6],ver_msg[7]
-        ver_msg[8] = CalcCrc8(ver_msg, sizeof(ver_msg) - 1);
+        ver_msg[7] = CalcCrc8(ver_msg, sizeof(ver_msg) - 1);
         am_hal_ios_fifo_write(g_pIOSHandle, ver_msg, sizeof(ver_msg), &num_write);
         if(sizeof(ver_msg) < num_write)
             return 1;
