@@ -69,8 +69,14 @@ void task_list_insert(void (*taskhandle)(void))
     
     for(i = 0; i < APOLLO_TASK_FUNMAX; i++)
     {
+        if (taskList[i] == taskhandle)
+            return;
+
         if (!taskList[i])
+        {
             taskList[i] = taskhandle;
+            return;
+        }
     }
 }
 
@@ -124,7 +130,8 @@ void call_task_list(void)
 
     for(i = 0; i < APOLLO_TASK_FUNMAX; i++)
     {
-        taskList[i]();
+        if (taskList[i])
+            taskList[i]();
     }
 }
 

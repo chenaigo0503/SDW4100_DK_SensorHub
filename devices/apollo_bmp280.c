@@ -207,11 +207,6 @@ static void get_calib_param(void)
 void bmp280_init(void)
 {
     uint8_t BMP280Id = 0;
-    uint8_t pr_mode;
-    struct bmp280_status m_statue;
-    struct bmp280_uncomp_data m_uncomp_data;
-    int32_t temp;
-    uint32_t press;
 
     am_hal_iom_config_t m_sIOMI2cConfig =
     {
@@ -261,27 +256,6 @@ void bmp280_init(void)
     conf.os_temp = BMP280_OS_NONE;
     conf.odr = BMP280_ODR_0_5_MS;
     conf.spi3w_en = BMP280_SPI3_WIRE_DISABLE;
-    
-    // data test
-    conf.os_pres = BMP280_OS_4X;
-    conf.os_temp = BMP280_OS_1X;
-    conf.filter = BMP280_FILTER_COEFF_16;
-    
-    bmp280_set_power_mode(BMP280_NORMAL_MODE);
-    
-    //while(1)
-    {
-        bmp280_get_status(&m_statue);
-        if(m_statue.im_update && m_statue.measuring)
-        {
-            bmp280_get_uncomp_data(&m_uncomp_data);
-            bmp280_get_comp_temp_32bit(&temp, m_uncomp_data.uncomp_temp);
-            bmp280_get_comp_pres_32bit(&press, m_uncomp_data.uncomp_press);
-
-            //pr_err("x1=%d,x2=%d\n\r", 103000, press);
-        }
-    }
-
 }
 
 /*!
@@ -371,6 +345,14 @@ void bmp280_get_power_mode(uint8_t *mode)
  */
 void bmp280_set_power_mode(uint8_t mode)
 {
+    if (mode == BMP280_NORMAL_MODE)
+    {
+        // The recommended configuration
+        conf.os_pres = BMP280_OS_4X;
+        conf.os_temp = BMP280_OS_1X;
+        conf.filter = BMP280_FILTER_COEFF_16;
+    }
+
     conf_sensor(mode);
 }
 

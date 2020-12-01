@@ -177,8 +177,9 @@ uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data)
     send_msg[0] = 0xAA;
     send_msg[1] = APOLLO_HUB_PID;
     send_msg[2] = msg_id;
+    send_msg[3] = apollo_message_len[msg_id];
     
-    memcpy(&send_msg[3], msg_data, apollo_message_len[msg_id]);
+    memcpy(&send_msg[4], msg_data, apollo_message_len[msg_id]);
     send_msg[apollo_message_len[msg_id] + 4] =
         CalcCrc8(send_msg, apollo_message_len[msg_id] + 3);
 

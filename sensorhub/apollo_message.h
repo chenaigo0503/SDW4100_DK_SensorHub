@@ -34,21 +34,25 @@
 #define APOLLO_SET_TIME_CMD        0x12
 #define APOLLO_SET_TIME_RESP       0x13
 
-#define APOLLO_SENSOR_0_STOP_CMD   0x40
-#define APOLLO_SENSOR_1_STOP_CMD   0x41
-#define APOLLO_SENSOR_2_STOP_CMD   0x42
-#define APOLLO_SENSOR_0_START_CMD  0x60
+#define APOLLO_SENSOR_0_STOP_CMD   0x40     // ACC
+#define APOLLO_SENSOR_1_STOP_CMD   0x41     // GYRO
+#define APOLLO_SENSOR_2_STOP_CMD   0x42     // TEMP
+#define APOLLO_SENSOR_3_STOP_CMD   0x43     // presuer
+#define APOLLO_SENSOR_0_START_CMD  0x60     // 
 #define APOLLO_SENSOR_1_START_CMD  0x61
 #define APOLLO_SENSOR_2_START_CMD  0x62
+#define APOLLO_SENSOR_3_START_CMD  0x63
 #define APOLLO_SENSOR_0_STOP_RESP  0x80
 #define APOLLO_SENSOR_1_STOP_RESP  0x81
 #define APOLLO_SENSOR_2_STOP_RESP  0x82
+#define APOLLO_SENSOR_3_STOP_RESP  0x83
 #define APOLLO_SENSOR_0_START_RESP 0xa0
 #define APOLLO_SENSOR_1_START_RESP 0xa1
 #define APOLLO_SENSOR_2_START_RESP 0xa2
 #define APOLLO_SENSOR_0_EVNT       0xc0
 #define APOLLO_SENSOR_1_EVNT       0xc1
 #define APOLLO_SENSOR_2_EVNT       0xc2
+#define APOLLO_SENSOR_3_EVNT       0xc3
 
 typedef struct apollo_msg{
     uint8_t mid;
@@ -76,7 +80,7 @@ static uint8_t apollo_message_len[256] = {
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //9x
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Ax
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Bx
-    12, 12, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Cx
+    12, 12, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Cx
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Dx
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Ex
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Fx

@@ -66,7 +66,7 @@ static void delay2run_handle(void)
     // Function processing completed, stop the timer
     if (!d2rIs)
     {
-        PR_INFO("Completed, stop the timer.");
+        // PR_INFO("Completed, stop the timer.");
         am_hal_ctimer_stop(APOLLO_DELAY2RUN_TIMERNUM, APOLLO_DELAY2RUN_TIMERSEG);
         d2rTimerRun = false;
     }

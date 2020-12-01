@@ -45,6 +45,8 @@ extern uint8_t g_UARTRxBuf1Sta; // 0 0-0x63 0x64
 extern uint8_t g_UARTRxBuf2[128];
 extern uint8_t g_UARTRxBuf2Sta;
 
+static uint8_t g_bmp280State = 0; // 1: temp, 2: pres, 3: all
+
 //*****************************************************************************
 //
 // Related functions that participate in message management
@@ -68,9 +70,38 @@ void get_gyro_send_msg(void)
     
     if (!lsm6dso_angular_get(gyroData))
     {
-        send_event_msg(APOLLO_SENSOR_0_EVNT, (uint8_t*)gyroData);
+        send_event_msg(APOLLO_SENSOR_1_EVNT, (uint8_t*)gyroData);
 
         inform_host();
+    }
+}
+
+void get_bmp280_send_msg(void)
+{
+    struct bmp280_status m_statue;
+    
+    bmp280_get_status(&m_statue);
+    if (m_statue.im_update && m_statue.measuring)
+    {
+        struct bmp280_uncomp_data m_uncomp_data;
+        int32_t temp = 0;
+        uint32_t press;
+        
+        bmp280_get_uncomp_data(&m_uncomp_data);
+
+        if (g_bmp280State & 0x01) // temperature
+        {
+            bmp280_get_comp_temp_32bit(&temp, m_uncomp_data.uncomp_temp);
+            send_event_msg(APOLLO_SENSOR_2_EVNT, (uint8_t*)&temp);
+            inform_host();
+        }
+
+        if (g_bmp280State & 0x02) // pressure
+        {
+            bmp280_get_comp_pres_32bit(&press, m_uncomp_data.uncomp_press);
+            send_event_msg(APOLLO_SENSOR_3_EVNT, (uint8_t*)&press);
+            inform_host();
+        }
     }
 }
 
@@ -176,6 +207,30 @@ main(void)
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
+                case APOLLO_SENSOR_2_STOP_CMD:
+                    PR_ERR("will close Temperature sensor");
+                    g_bmp280State &= ~(0x01);
+                    if (g_bmp280State == 0)
+                    {
+                        bmp280_set_config();
+                        task_list_remove(get_bmp280_send_msg);
+                    }
+
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
+                case APOLLO_SENSOR_3_STOP_CMD:
+                    PR_ERR("will close pressure sensor");
+                    g_bmp280State &= ~(0x02);
+                    if (g_bmp280State == 0)
+                    {
+                        bmp280_set_config();
+                        task_list_remove(get_bmp280_send_msg);
+                    }
+
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
                 case APOLLO_SENSOR_0_START_CMD:
                     PR_ERR("will open A sensor");
 
@@ -187,6 +242,32 @@ main(void)
                     PR_ERR("will open G sensor");
 
                     task_list_insert(get_gyro_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
+                case APOLLO_SENSOR_2_START_CMD:  // temperature
+                    PR_ERR("will open Temperature sensor");
+
+                    if (!g_bmp280State)
+                    {
+                        bmp280_set_power_mode(BMP280_NORMAL_MODE);
+                        task_list_insert(get_bmp280_send_msg);
+                    }
+
+                    g_bmp280State |= 0x01;
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
+                case APOLLO_SENSOR_3_START_CMD:  // pressure
+                    PR_ERR("will open pressure sensor");
+
+                    if (!g_bmp280State)
+                    {
+                        bmp280_set_power_mode(BMP280_NORMAL_MODE);
+                        task_list_insert(get_bmp280_send_msg);
+                    }
+
+                    g_bmp280State |= 0x02;
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
