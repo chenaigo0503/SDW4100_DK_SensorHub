@@ -140,7 +140,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>JL2CM3</Key>
-          <Name>-U483125294 -O2510 -S5 -ZTIFSpeedSel1000 -A0 -C0 -JU1 -JI127.0.0.1 -JP0 -RST0 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -TO1 -TC3000000 -TP21 -TDS2 -TDT0 -TDC1F -TIE1 -TIP0 -TB1 -TFE0 -FO15 -FD10000000 -FC4000 -FN1 -FF0Apollo3.FLM -FS00 -FL0100000 -FP0($$Device:AMA3B1KK-KBR$Flash\Apollo3.FLM)</Name>
+          <Name>-U261005935 -O2510 -S5 -ZTIFSpeedSel1000 -A0 -C0 -JU1 -JI127.0.0.1 -JP0 -RST0 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -TO1 -TC3000000 -TP21 -TDS2 -TDT0 -TDC1F -TIE1 -TIP0 -TB1 -TFE0 -FO15 -FD10000000 -FC4000 -FN1 -FF0Apollo3.FLM -FS00 -FL0100000 -FP0($$Device:AMA3B1KK-KBR$Flash\Apollo3.FLM)</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>

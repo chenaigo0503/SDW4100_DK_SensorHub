@@ -269,7 +269,7 @@ void bmp280_init(void)
     
     bmp280_set_power_mode(BMP280_NORMAL_MODE);
     
-    while(1)
+    //while(1)
     {
         bmp280_get_status(&m_statue);
         if(m_statue.im_update && m_statue.measuring)

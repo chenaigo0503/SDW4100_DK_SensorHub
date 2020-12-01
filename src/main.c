@@ -162,6 +162,20 @@ main(void)
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
+                case APOLLO_SENSOR_0_STOP_CMD:
+                    PR_ERR("will close A sensor");
+
+                    task_list_remove(get_acc_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
+                case APOLLO_SENSOR_1_STOP_CMD:
+                    PR_ERR("will close G sensor");
+
+                    task_list_remove(get_gyro_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
                 case APOLLO_SENSOR_0_START_CMD:
                     PR_ERR("will open A sensor");
 
