@@ -105,6 +105,23 @@ void get_bmp280_send_msg(void)
     }
 }
 
+void get_magnet_send_msg(void)
+{
+    if (ak099xx_check_rdy())
+    {
+        int16_t ak_data[3];
+        int16_t ak_st[2];
+        ak099xx_get_data(ak_data, ak_st);
+        
+        if (ak_st[1] &= 0x0004)
+        {
+            send_event_msg(APOLLO_SENSOR_4_EVNT, (uint8_t*)ak_data);
+            // pr_err("x1=%d,x2=%d,x3=%d\r\n", ak_data[0], ak_data[1], ak_data[2]);
+            inform_host();
+        }
+    }
+}
+
 //*****************************************************************************
 //
 // Main
@@ -231,6 +248,13 @@ main(void)
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
+                case APOLLO_SENSOR_4_STOP_CMD:
+                    PR_ERR("will close compass sensor");
+                    ak099xx_stop();
+                    task_list_remove(get_magnet_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
                 case APOLLO_SENSOR_0_START_CMD:
                     PR_ERR("will open A sensor");
 
@@ -268,6 +292,13 @@ main(void)
                     }
 
                     g_bmp280State |= 0x02;
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
+                case APOLLO_SENSOR_4_START_CMD:  // compass
+                    PR_ERR("will open compass sensor");
+                    ak099xx_start(10);
+                    task_list_insert(get_magnet_send_msg);
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 

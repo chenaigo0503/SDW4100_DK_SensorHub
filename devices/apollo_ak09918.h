@@ -56,12 +56,42 @@ extern "C"
 #define AK099XX_FUSE_ASAY                0x61
 #define AK099XX_FUSE_ASAZ                0x62
 
+#define AK099XX_BDATA_SIZE               9
+
+#define AK099XX_MODE_SNG_MEASURE         0x01
+#define AK099XX_MODE_CONT_MEASURE_MODE1  0x02
+#define AK099XX_MODE_CONT_MEASURE_MODE2  0x04
+#define AK099XX_MODE_CONT_MEASURE_MODE3  0x06
+#define AK099XX_MODE_CONT_MEASURE_MODE4  0x08
+#define AK099XX_MODE_CONT_MEASURE_MODE5  0x0A
+#define AK099XX_MODE_CONT_MEASURE_MODE6  0x0C
+#define AK099XX_MODE_SELF_TEST           0x10
+#define AK099XX_MODE_FUSE_ACCESS         0x1F
+#define AK099XX_MODE_POWER_DOWN          0x00
+
+#define AK099XX_SOFT_RESET               0x01
+
+#define AK09911_WIA_VAL                  0x548
+#define AK09912_WIA_VAL                  0x448
+#define AK09913_WIA_VAL                  0x848
+#define AK09915_WIA_VAL                  0x1048
+#define AK09916C_WIA_VAL                 0x948
+#define AK09916D_WIA_VAL                 0xB48
+#define AK09918_WIA_VAL                  0xC48
+#define AK09915D_INFO_VAL                0x02
+
 //*****************************************************************************
 //
 // External function definitions
 //
 //*****************************************************************************
 extern void ak099xx_init(void);
+void ak099xx_start(const int32_t freq);
+void ak099xx_stop(void);
+uint8_t ak099xx_check_rdy(void);
+void ak099xx_get_data(int16_t data[3], int16_t st[2]);
+
+
 
 #ifdef __cplusplus
 }

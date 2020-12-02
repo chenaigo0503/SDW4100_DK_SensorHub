@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <string.h>
 #include "am_bsp.h"
 #include "am_mcu_apollo.h"
 #include "am_util.h"
@@ -27,6 +28,7 @@
 #include "apollo_tracelog.h"
 
 void* g_AK09918Hanldle;
+static uint32_t akmBuffer[2];
 
 /*
  * @brief  Read generic device register (platform dependent)
@@ -38,16 +40,18 @@ void* g_AK09918Hanldle;
  * @param  len       number of consecutive register to read
  *
  */
-void ak099xx_read(uint8_t reg, uint32_t *bufp,
-                             uint32_t len)
+void ak099xx_read(uint8_t reg, uint8_t *bufp, uint32_t len)
 {
     am_hal_iom_transfer_t       Transaction;
+    
+    if (bufp == NULL)
+        return;
 
     Transaction.ui32InstrLen    = 1;
     Transaction.ui32Instr       = reg;
     Transaction.eDirection      = AM_HAL_IOM_RX;
     Transaction.ui32NumBytes    = len;
-    Transaction.pui32RxBuffer   = bufp;
+    Transaction.pui32RxBuffer   = akmBuffer;
     Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
@@ -55,6 +59,7 @@ void ak099xx_read(uint8_t reg, uint32_t *bufp,
     Transaction.uPeerInfo.ui32I2CDevAddr = AK09918_ADDR;
 
     am_hal_iom_blocking_transfer(g_AK09918Hanldle, &Transaction);
+    memcpy(bufp, akmBuffer, len);
 }
 
 /*
@@ -67,23 +72,48 @@ void ak099xx_read(uint8_t reg, uint32_t *bufp,
  * @param  len       number of consecutive register to write
  *
  */
-static void platform_write(void *handle, uint8_t reg, uint32_t *bufp,
-                              uint32_t len)
+static void ak099xx_write(uint8_t reg, uint32_t len, uint8_t *bufp)
 {
     am_hal_iom_transfer_t       Transaction;
+    
+    if (bufp == NULL)
+        return;
+    
+    memcpy(akmBuffer, bufp, len);
 
     Transaction.ui32InstrLen    = 1;
     Transaction.ui32Instr       = reg;
     Transaction.eDirection      = AM_HAL_IOM_TX;
     Transaction.ui32NumBytes    = len;
-    Transaction.pui32TxBuffer   = bufp;
+    Transaction.pui32TxBuffer   = akmBuffer;
     Transaction.bContinue       = false;
     Transaction.ui8RepeatCount  = 0;
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
     Transaction.uPeerInfo.ui32I2CDevAddr = AK09918_ADDR;
 
-    am_hal_iom_blocking_transfer(handle, &Transaction);
+    am_hal_iom_blocking_transfer(g_AK09918Hanldle, &Transaction);
+}
+
+void ak099xx_set_mode(const uint8_t mode)
+{
+    uint8_t i2cData = mode;
+
+    ak099xx_write(AK099XX_REG_CNTL2, 1, &i2cData);
+}
+
+void ak099xx_soft_reset(void)
+{
+    uint8_t i2cData;
+    int16_t fret;
+
+    /* Soft Reset */
+    i2cData = AK099XX_SOFT_RESET;
+
+    ak099xx_write(AK099XX_REG_CNTL3, 1, &i2cData);
+
+    /* When succeeded, sleep 'Twait' */
+    am_util_delay_ms(100);
 }
 
 //*****************************************************************************
@@ -97,7 +127,7 @@ static void platform_write(void *handle, uint8_t reg, uint32_t *bufp,
 //*****************************************************************************
 void ak099xx_init(void)
 {
-    uint32_t ak099ID = 0;
+    uint16_t ak099ID = 0;
     am_hal_iom_config_t m_sIOMI2cConfig =
     {
         .eInterfaceMode = AM_HAL_IOM_I2C_MODE,
@@ -126,9 +156,9 @@ void ak099xx_init(void)
     // Enable the IOM.
     am_hal_iom_enable(g_AK09918Hanldle);
 
-    ak099xx_read(AK099XX_REG_WIA1, &ak099ID, 2);
+    ak099xx_read(AK099XX_REG_WIA1, (uint8_t*)&ak099ID, 2);
 
-    if(AK09918_WHO_AM_I != (uint16_t)ak099ID)
+    if(AK09918_WHO_AM_I != ak099ID)
     {
         PR_ERR("ERROR: ak09918 get ID: 0x%04x error.", ak099ID);
     }
@@ -136,513 +166,63 @@ void ak099xx_init(void)
     {
         PR_INFO("ak09918 get ID success.");
     }
+    
+    ak099xx_soft_reset();
 }
 
-#if 0
-//*****************************************************************************
-//
-//! @brief Disables an array of LEDs
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32NumLEDs is the total number of LEDs in the array.
-//!
-//! This function disables the GPIOs for an array of LEDs.
-//!
-//! @return None.
-//
-//*****************************************************************************
-void
-am_devices_led_array_disable(am_devices_led_t *psLEDs, uint32_t ui32NumLEDs)
+void ak099xx_start(const int32_t freq)
 {
-    if ( (psLEDs == NULL)                       ||
-         (ui32NumLEDs > MAX_LEDS) )
-    {
-        return;
-    }
-
-    //
-    // Loop through the list of LEDs, configuring each one individually.
-    //
-    for ( uint32_t i = 0; i < ui32NumLEDs; i++ )
-    {
-        if ( psLEDs[i].ui32GPIONumber >= AM_HAL_GPIO_MAX_PADS )
-        {
-            continue;
-        }
-
-#if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
-        am_hal_gpio_pinconfig((psLEDs + i)->ui32GPIONumber, am_hal_gpio_pincfg_disabled);
-#else
-#if AM_APOLLO3_GPIO
-        am_hal_gpio_pinconfig((psLEDs + i)->ui32GPIONumber, g_AM_HAL_GPIO_DISABLE);
-#else // AM_APOLLO3_GPIO
-        am_hal_gpio_pin_config((psLEDs + i)->ui32GPIONumber, AM_HAL_GPIO_DISABLE);
-#endif // AM_APOLLO3_GPIO
-#endif
-    }
+	switch(freq)
+	{
+		case 10:
+			ak099xx_set_mode(AK099XX_MODE_CONT_MEASURE_MODE1);
+			break;
+		case 20:
+            ak099xx_set_mode(AK099XX_MODE_CONT_MEASURE_MODE2);
+			break;
+		case 50:
+			ak099xx_set_mode(AK099XX_MODE_CONT_MEASURE_MODE3);
+			break;
+		case 100:
+			ak099xx_set_mode(AK099XX_MODE_CONT_MEASURE_MODE4);
+			break;
+		default:
+			ak099xx_set_mode(AK099XX_MODE_SNG_MEASURE);
+			break;
+	}
 }
 
-//*****************************************************************************
-//
-//! @brief Configures the necessary pins for an array of LEDs
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32NumLEDs is the total number of LEDs in the array.
-//!
-//! This function configures the GPIOs for an array of LEDs.
-//!
-//! @return None.
-//
-//*****************************************************************************
-void
-am_devices_led_array_init(am_devices_led_t *psLEDs, uint32_t ui32NumLEDs)
+void ak099xx_stop(void)
 {
-    uint32_t i;
-
-    if ( (psLEDs == NULL)                       ||
-         (ui32NumLEDs > MAX_LEDS) )
-    {
-        return;
-    }
-
-    //
-    // Loop through the list of LEDs, configuring each one individually.
-    //
-    for ( i = 0; i < ui32NumLEDs; i++ )
-    {
-        am_devices_led_init(psLEDs + i);
-    }
+    ak099xx_set_mode(AK099XX_MODE_POWER_DOWN);
 }
 
-//*****************************************************************************
-//
-//! @brief Turns on the requested LED.
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32LEDNum is the LED number for the light to turn on.
-//!
-//! This function turns on a single LED.
-//!
-//! @return None.
-//
-//*****************************************************************************
-void
-am_devices_led_on(am_devices_led_t *psLEDs, uint32_t ui32LEDNum)
+uint8_t ak099xx_check_rdy(void)
 {
-    if ( (psLEDs == NULL)                       ||
-         (ui32LEDNum >= MAX_LEDS)               ||
-         (psLEDs[ui32LEDNum].ui32GPIONumber >= AM_HAL_GPIO_MAX_PADS) )
-    {
-        return;
-    }
+    uint8_t i2cData;
 
-#if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                psLEDs[ui32LEDNum].ui32Polarity & AM_DEVICES_LED_POL_POLARITY_M ?
-                                AM_HAL_GPIO_OUTPUT_SET : AM_HAL_GPIO_OUTPUT_CLEAR);
-    }
-    else
-    {
-        //
-        // Turn on the output driver for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TRISTATE_ENABLE);
-    }
-#else
-#if (1 == AM_APOLLO3_GPIO)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                psLEDs[ui32LEDNum].ui32Polarity & AM_DEVICES_LED_POL_POLARITY_M ?
-                                AM_HAL_GPIO_OUTPUT_SET : AM_HAL_GPIO_OUTPUT_CLEAR);
-    }
-    else
-    {
-        //
-        // Turn on the output driver for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TRISTATE_ENABLE);
-    }
-#else // AM_APOLLO3_GPIO
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_out_bit_replace(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                    psLEDs[ui32LEDNum].ui32Polarity &
-                                    AM_DEVICES_LED_POL_POLARITY_M );
-    }
-    else
-    {
-        //
-        // Turn on the output driver for the LED.
-        //
-        am_hal_gpio_out_enable_bit_set(psLEDs[ui32LEDNum].ui32GPIONumber);
-    }
-#endif // AM_APOLLO3_GPIO
-#endif
+    /* Check DRDY bit of ST1 register */
+    ak099xx_read(AK099XX_REG_ST1, &i2cData, 1);
+
+    /* AK09911/09912/09913 has only one data.
+     * So, return is 0 or 1. */
+    return (i2cData & 0x01);
 }
 
-//*****************************************************************************
-//
-//! @brief Turns off the requested LED.
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32LEDNum is the LED number for the light to turn off.
-//!
-//! This function turns off a single LED.
-//!
-//! @return None.
-//
-//*****************************************************************************
-void
-am_devices_led_off(am_devices_led_t *psLEDs, uint32_t ui32LEDNum)
+void ak099xx_get_data(int16_t data[3], int16_t st[2])
 {
-    if ( (psLEDs == NULL)                       ||
-         (ui32LEDNum >= MAX_LEDS)               ||
-         (psLEDs[ui32LEDNum].ui32GPIONumber >= AM_HAL_GPIO_MAX_PADS) )
-    {
-        return;
+    uint8_t i2cData[AK099XX_BDATA_SIZE];
+    int16_t tmp;
+    uint8_t i;
+
+    /* Read data */
+    ak099xx_read(AK099XX_REG_ST1, i2cData, AK099XX_BDATA_SIZE);
+
+    for (i = 0; i < 3; i++) {
+        /* convert to int16 data */
+        data[i] = i2cData[i*2+1] | (i2cData[i*2+2]<<8);
     }
 
-#if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                psLEDs[ui32LEDNum].ui32Polarity & AM_DEVICES_LED_POL_POLARITY_M ?
-                                AM_HAL_GPIO_OUTPUT_CLEAR : AM_HAL_GPIO_OUTPUT_SET);
-    }
-    else
-    {
-        //
-        // Turn off the output driver for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
-    }
-#else
-#if (1 == AM_APOLLO3_GPIO)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                psLEDs[ui32LEDNum].ui32Polarity & AM_DEVICES_LED_POL_POLARITY_M ?
-                                AM_HAL_GPIO_OUTPUT_CLEAR : AM_HAL_GPIO_OUTPUT_SET);
-    }
-    else
-    {
-        //
-        // Turn off the output driver for the LED.
-        //
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
-    }
-#else // AM_APOLLO3_GPIO
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Set the output to the correct state for the LED.
-        //
-        am_hal_gpio_out_bit_replace(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                    !(psLEDs[ui32LEDNum].ui32Polarity &
-                                      AM_DEVICES_LED_POL_POLARITY_M) );
-    }
-    else
-    {
-        //
-        // Turn off the output driver for the LED.
-        //
-        am_hal_gpio_out_enable_bit_clear(psLEDs[ui32LEDNum].ui32GPIONumber);
-    }
-#endif // AM_APOLLO3_GPIO
-#endif
+    st[0] = i2cData[0];
+    st[1] = i2cData[AK099XX_BDATA_SIZE - 1];
 }
-
-//*****************************************************************************
-//
-//! @brief Toggles the requested LED.
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32LEDNum is the LED number for the light to toggle.
-//!
-//! This function toggles a single LED.
-//!
-//! @return None.
-//
-//*****************************************************************************
-void
-am_devices_led_toggle(am_devices_led_t *psLEDs, uint32_t ui32LEDNum)
-{
-    if ( (psLEDs == NULL)                       ||
-         (ui32LEDNum >= MAX_LEDS)               ||
-         (psLEDs[ui32LEDNum].ui32GPIONumber >= AM_HAL_GPIO_MAX_PADS) )
-    {
-        return;
-    }
-
-#if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TOGGLE);
-    }
-    else
-    {
-        uint32_t ui32Ret, ui32Value;
-
-        //
-        // Check to see if the LED pin is enabled.
-        //
-        ui32Ret = am_hal_gpio_state_read(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                         AM_HAL_GPIO_ENABLE_READ, &ui32Value);
-
-        if ( ui32Ret == AM_HAL_STATUS_SUCCESS )
-        {
-            if ( ui32Value )
-            {
-                //
-                // If it was enabled, turn if off.
-                //
-                am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                        AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
-            }
-            else
-            {
-                //
-                // If it was not enabled, turn it on.
-                //
-                am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                        AM_HAL_GPIO_OUTPUT_TRISTATE_ENABLE);
-            }
-        }
-    }
-#else
-#if (1 == AM_APOLLO3_GPIO)
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                AM_HAL_GPIO_OUTPUT_TOGGLE);
-    }
-    else
-    {
-        uint32_t ui32Ret, ui32Value;
-
-        //
-        // Check to see if the LED pin is enabled.
-        //
-        ui32Ret = am_hal_gpio_state_read(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                         AM_HAL_GPIO_ENABLE_READ, &ui32Value);
-
-        if ( ui32Ret == AM_HAL_STATUS_SUCCESS )
-        {
-            if ( ui32Value )
-            {
-                //
-                // If it was enabled, turn if off.
-                //
-                am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                        AM_HAL_GPIO_OUTPUT_TRISTATE_DISABLE);
-            }
-            else
-            {
-                //
-                // If it was not enabled, turn it on.
-                //
-                am_hal_gpio_state_write(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                        AM_HAL_GPIO_OUTPUT_TRISTATE_ENABLE);
-            }
-        }
-    }
-#else // AM_APOLLO3_GPIO
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        am_hal_gpio_out_bit_toggle(psLEDs[ui32LEDNum].ui32GPIONumber);
-    }
-    else
-    {
-        //
-        // Check to see if the LED pin is enabled.
-        //
-        if ( am_hal_gpio_out_enable_bit_get(psLEDs[ui32LEDNum].ui32GPIONumber) )
-        {
-            //
-            // If it was enabled, turn if off.
-            //
-            am_hal_gpio_out_enable_bit_clear(psLEDs[ui32LEDNum].ui32GPIONumber);
-        }
-        else
-        {
-            //
-            // If it was not enabled, turn if on.
-            //
-            am_hal_gpio_out_enable_bit_set(psLEDs[ui32LEDNum].ui32GPIONumber);
-        }
-    }
-#endif // AM_APOLLO3_GPIO
-#endif
-}
-
-//*****************************************************************************
-//
-//! @brief Gets the state of the requested LED.
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32LEDNum is the LED to check.
-//!
-//! This function checks the state of a single LED.
-//!
-//! @return true if the LED is on.
-//
-//*****************************************************************************
-bool
-am_devices_led_get(am_devices_led_t *psLEDs, uint32_t ui32LEDNum)
-{
-    if ( (psLEDs == NULL)                       ||
-         (ui32LEDNum >= MAX_LEDS)               ||
-         (psLEDs[ui32LEDNum].ui32GPIONumber >= AM_HAL_GPIO_MAX_PADS) )
-    {
-        return false;   // No error return, so return as off
-    }
-
-#if defined(AM_PART_APOLLO4) || defined(AM_PART_APOLLO4B)
-    uint32_t ui32Ret, ui32Value;
-    am_hal_gpio_read_type_e eReadType;
-
-    eReadType = AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity ?
-                AM_HAL_GPIO_OUTPUT_READ : AM_HAL_GPIO_ENABLE_READ;
-
-    ui32Ret = am_hal_gpio_state_read(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                     eReadType, &ui32Value);
-
-    if ( ui32Ret == AM_HAL_STATUS_SUCCESS )
-    {
-        return (bool)ui32Value;
-    }
-    else
-    {
-        return false;
-    }
-#else
-#if (1 == AM_APOLLO3_GPIO)
-    uint32_t ui32Ret, ui32Value;
-    am_hal_gpio_read_type_e eReadType;
-
-    eReadType = AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity ?
-                AM_HAL_GPIO_OUTPUT_READ : AM_HAL_GPIO_ENABLE_READ;
-
-    ui32Ret = am_hal_gpio_state_read(psLEDs[ui32LEDNum].ui32GPIONumber,
-                                     eReadType, &ui32Value);
-
-    if ( ui32Ret == AM_HAL_STATUS_SUCCESS )
-    {
-        return (bool)ui32Value;
-    }
-    else
-    {
-        return false;
-    }
-#else // AM_APOLLO3_GPIO
-    //
-    // Handle Direct Drive Versus 3-State (with pull-up or no buffer).
-    //
-    if ( AM_DEVICES_LED_POL_DIRECT_DRIVE_M & psLEDs[ui32LEDNum].ui32Polarity )
-    {
-        //
-        // Mask to the GPIO bit position for this GPIO number.
-        //
-        uint64_t ui64Mask = ((uint64_t)0x01l) << psLEDs[ui32LEDNum].ui32GPIONumber;
-
-        //
-        // Extract the state of this bit and return it.
-        //
-        return !!(am_hal_gpio_out_read() & ui64Mask);
-    }
-    else
-    {
-        return am_hal_gpio_out_enable_bit_get(psLEDs[ui32LEDNum].ui32GPIONumber);
-    }
-#endif // AM_APOLLO3_GPIO
-#endif
-}
-
-//*****************************************************************************
-//
-//! @brief Display a binary value using LEDs.
-//!
-//! @param psLEDs is an array of LED structures.
-//! @param ui32NumLEDs is the number of LEDs in the array.
-//! @param ui32Value is the value to display on the LEDs.
-//!
-//! This function displays a value in binary across an array of LEDs.
-//!
-//! @return true if the LED is on.
-//
-//*****************************************************************************
-void
-am_devices_led_array_out(am_devices_led_t *psLEDs, uint32_t ui32NumLEDs,
-                         uint32_t ui32Value)
-{
-    uint32_t i;
-
-    for ( i = 0; i < ui32NumLEDs; i++ )
-    {
-        if ( ui32Value & (1 << i) )
-        {
-            am_devices_led_on(psLEDs, i);
-        }
-        else
-        {
-            am_devices_led_off(psLEDs, i);
-        }
-    }
-}
-//*****************************************************************************
-//
-// End Doxygen group.
-//! @}
-//
-//*****************************************************************************
-#endif
