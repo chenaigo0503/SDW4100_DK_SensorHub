@@ -181,7 +181,7 @@ uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data)
     
     memcpy(&send_msg[4], msg_data, apollo_message_len[msg_id]);
     send_msg[apollo_message_len[msg_id] + 4] =
-        CalcCrc8(send_msg, apollo_message_len[msg_id] + 3);
+        CalcCrc8(send_msg, apollo_message_len[msg_id] + 4);
 
     am_hal_ios_fifo_write(g_pIOSHandle, send_msg, apollo_message_len[msg_id] + 5, &num_write);
     if(sizeof(send_msg) < num_write)
