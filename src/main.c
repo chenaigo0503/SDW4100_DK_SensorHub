@@ -35,7 +35,9 @@
 #include "apollo_lsm6dso.h"
 #include "apollo_ak09918.h"
 #include "apollo_bmp280.h"
-#include "apollo_pah8011.h"
+//#include "apollo_pah8011.h"
+
+#include "pah_driver.h"
 
 extern volatile msg_link msg_link_quene;
 extern uint8_t amotaStart;
@@ -59,6 +61,7 @@ void get_acc_send_msg(void)
     if (!lsm6dso_acceleration_get(accData))
     {
         send_event_msg(APOLLO_SENSOR_0_EVNT, (uint8_t*)accData);
+        pr_err("x1=%f,x2=%f,x3=%f\r\n", accData[0], accData[1], accData[2]);
 
         inform_host();
     }
@@ -147,7 +150,8 @@ main(void)
     lsm6dso_init();
     ak099xx_init();
     bmp280_init();
-    pah8011_init();
+    //pah8011_init();
+    pah_init();
 
     am_hal_interrupt_master_enable();
 

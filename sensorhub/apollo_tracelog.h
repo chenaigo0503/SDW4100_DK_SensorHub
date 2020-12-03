@@ -50,7 +50,7 @@
 #endif
 
 #if (APOLLO_LOG_INFO < APOLLO_LOG_LEVEL)
-#define PR_info(...) am_util_stdio_printf(__VA_ARGS__)
+#define pr_info(...) am_util_stdio_printf(__VA_ARGS__)
 #else
 #define PR_info(...)
 #endif

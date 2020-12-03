@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>AM_PACKAGE_BGA AM_PART_APOLLO3 keil</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader;..\third_party\custom\crc8</IncludePath>
+              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader;..\third_party\custom\crc8;..\devices\apollo_pah8011;..\devices\apollo_pah8011\PAH_MAIN;..\devices\apollo_pah8011\PAH8011;..\devices\apollo_pah8011\PAH8011\pah_comm_others;..\devices\apollo_pah8011\PAH8011\verify;..\devices\apollo_pah8011\PxiAlg\HR\v5551</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -473,10 +473,30 @@
               <FileType>1</FileType>
               <FilePath>..\devices\apollo_bmp280.c</FilePath>
             </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>apollo_pah8011</GroupName>
+          <Files>
             <File>
-              <FileName>apollo_pah8011.c</FileName>
+              <FileName>pah_comm_i2c_length_limit.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\devices\apollo_pah8011.c</FilePath>
+              <FilePath>..\devices\apollo_pah8011\PAH8011\pah_comm_others\pah_comm_i2c_length_limit.c</FilePath>
+            </File>
+            <File>
+              <FileName>pah_driver_8011.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\devices\apollo_pah8011\PAH8011\pah_driver_8011.c</FilePath>
+            </File>
+            <File>
+              <FileName>pah_driver_8011_reg_array.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\devices\apollo_pah8011\PAH8011\pah_driver_8011_reg_array.c</FilePath>
+            </File>
+            <File>
+              <FileName>pah_8011_internal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\devices\apollo_pah8011\PAH8011\pah_8011_internal.c</FilePath>
             </File>
           </Files>
         </Group>
