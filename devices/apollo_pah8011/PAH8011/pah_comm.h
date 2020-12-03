@@ -25,6 +25,11 @@
 #define delay_ms(ms) am_util_delay_ms(ms);
 
 /*****************************************
+ * Apollo Function Declaration
+ *****************************************/
+void apollo_platform_init(void);
+
+/*****************************************
  * Global Function Declaration
  *****************************************/
 /**

@@ -166,6 +166,7 @@ bool pah_init(void)
     pah_flags_s flags;
 
     flags.stream = pah_stream_default;
+    apollo_platform_init();
 
     return pah_init_with_flags(&flags);
 }
