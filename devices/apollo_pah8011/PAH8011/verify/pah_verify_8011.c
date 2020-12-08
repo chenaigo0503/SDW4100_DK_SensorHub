@@ -23,7 +23,7 @@
 
 // platform support
 #include "pah_platform_functions.h"
-#include "system_clock.h"
+//#include "system_clock.h"
 
 //============================================================================
 // PRIVATE FUNCTION DECLARATIONS

@@ -27,6 +27,16 @@
 static void* g_Pah8011Hanldle;
 static uint32_t pahBuf[2];
 
+// ISR callback for the PAH8011
+static void pah_int1_handler(void)
+{
+    return;
+}
+
+static void pah_int2_handler(void)
+{
+    return;
+}
 /*============================================================================
 STATIC VARIABLE DEFINITIONS
 ============================================================================*/
@@ -127,6 +137,22 @@ void apollo_platform_init(void)
         .ui32ClockFreq = AM_HAL_IOM_1MHZ,
     };
 
+    am_hal_gpio_pincfg_t m_pah8011GpioInt1 = 
+    {
+        .uFuncSel = AM_HAL_PIN_19_GPIO,
+        .eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
+        .eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI,
+        .eGPInput = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+    };
+
+    am_hal_gpio_pincfg_t m_pah8011GpioInt2 = 
+    {
+        .uFuncSel = AM_HAL_PIN_18_GPIO,
+        .eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
+        .eIntDir = AM_HAL_GPIO_PIN_INTDIR_LO2HI,
+        .eGPInput = AM_HAL_GPIO_PIN_INPUT_ENABLE,
+    };
+
     // init i2c
     if(g_IOMArray[PAH8011_IOM_MODULE] == NULL)
     {
@@ -148,6 +174,20 @@ void apollo_platform_init(void)
 
     // Enable the IOM.
     am_hal_iom_enable(g_Pah8011Hanldle);
+    
+    // PIN INIT
+    am_hal_gpio_state_write(PAH8011_PIN_PDN, AM_HAL_GPIO_OUTPUT_CLEAR);
+    am_hal_gpio_pinconfig(PAH8011_PIN_PDN, g_AM_HAL_GPIO_OUTPUT);
+    am_hal_gpio_pinconfig(PAH8011_PIN_INT1, m_pah8011GpioInt1);
+    am_hal_gpio_pinconfig(PAH8011_PIN_INT2, m_pah8011GpioInt2);
+    AM_HAL_GPIO_MASKCREATE(GpioIntMask);
+    am_hal_gpio_interrupt_clear(AM_HAL_GPIO_MASKBIT(pGpioIntMask, PAH8011_PIN_INT1));
+    am_hal_gpio_interrupt_clear(AM_HAL_GPIO_MASKBIT(pGpioIntMask, PAH8011_PIN_INT2));
+    am_hal_gpio_interrupt_register(PAH8011_PIN_INT1, pah_int1_handler);
+    am_hal_gpio_interrupt_register(PAH8011_PIN_INT2, pah_int2_handler);
+    am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, PAH8011_PIN_INT1));
+    am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, PAH8011_PIN_INT2));
+    NVIC_EnableIRQ(GPIO_IRQn);
 }
 
 /*============================================================================

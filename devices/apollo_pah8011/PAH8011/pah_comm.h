@@ -24,6 +24,10 @@
 #include "am_util.h"
 #define delay_ms(ms) am_util_delay_ms(ms);
 
+#define PAH8011_PIN_PDN   17
+#define PAH8011_PIN_INT1  19
+#define PAH8011_PIN_INT2  18
+
 /*****************************************
  * Apollo Function Declaration
  *****************************************/

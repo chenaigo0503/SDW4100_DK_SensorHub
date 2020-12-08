@@ -498,6 +498,26 @@
               <FileType>1</FileType>
               <FilePath>..\devices\apollo_pah8011\PAH8011\pah_8011_internal.c</FilePath>
             </File>
+            <File>
+              <FileName>pah_factory_test.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\devices\apollo_pah8011\PAH_MAIN\pah_factory_test.c</FilePath>
+            </File>
+            <File>
+              <FileName>pah_hrd_function.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\devices\apollo_pah8011\PAH_MAIN\pah_hrd_function.c</FilePath>
+            </File>
+            <File>
+              <FileName>pah_verify_8011.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\devices\apollo_pah8011\PAH8011\verify\pah_verify_8011.c</FilePath>
+            </File>
+            <File>
+              <FileName>pah8series_motion5551_1_m4f_keil.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\devices\apollo_pah8011\PxiAlg\HR\v5551\pah8series_motion5551_1_m4f_keil.lib</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

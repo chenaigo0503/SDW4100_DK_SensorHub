@@ -1427,7 +1427,7 @@ static pah_ret _pah8011_read_ppg_fifo(uint32_t samples_per_read_per_ch, uint32_t
 
 #if defined(ENABLE_FIFO_CHECKSUM)
         {
-            uint8_t cks[8] = { 0 };
+            uint8_t cks[4] = { 0 };
             if (!pah_comm_write(0x7F, 0x02))
             {
                 ret = pah_err_comm_fail;
@@ -1438,12 +1438,12 @@ static pah_ret _pah8011_read_ppg_fifo(uint32_t samples_per_read_per_ch, uint32_t
                 ret = pah_err_comm_fail;
                 goto FAIL;
             }
-            if (!_pah8011_cks(g_state.fifo_data, samples_per_read, *(uint32_t *)cks))
+            /*if (!_pah8011_cks(g_state.fifo_data, samples_per_read, *(uint32_t *)cks))
             {
                 debug_printf("_pah8011_read_ppg_fifo(). _pah8011_cks fail\n");
                 ret = pah_err_fifo_checksum_fail;
                 goto FAIL;
-            }
+            }*/
             debug_printf("_pah8011_read_ppg_fifo(). _pah8011_cks success\n");
         }
 #endif  // ENABLE_FIFO_CHECKSUM

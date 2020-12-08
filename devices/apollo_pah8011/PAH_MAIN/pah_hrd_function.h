@@ -134,4 +134,7 @@ void pah8series_touch_mode_start (void);
  */
 void hrd_alg_task(void);
 
+
+void demo_ppg_polling_HRD(void);
+
 #endif  // header guard

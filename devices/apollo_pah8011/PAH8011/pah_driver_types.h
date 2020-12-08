@@ -157,7 +157,7 @@ typedef enum
 {
     alg_status_idle,
     alg_status_process,
-	  alg_status_close,
+    alg_status_close,
 } alg_status_e;
 
 typedef struct {
@@ -194,7 +194,7 @@ typedef struct
 #endif
     uint32_t            Expo_time[3];
     uint8_t             LEDDAC[3];
-    alg_status_e    alg_status;
+    alg_status_e        alg_status;
     uint8_t             Tuning;
     uint16_t            Touch_data;
 } main_state_s;

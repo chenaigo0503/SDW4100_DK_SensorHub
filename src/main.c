@@ -38,6 +38,7 @@
 //#include "apollo_pah8011.h"
 
 #include "pah_driver.h"
+#include "pah_hrd_function.h"
 
 extern volatile msg_link msg_link_quene;
 extern uint8_t amotaStart;
@@ -161,6 +162,8 @@ main(void)
 
     // init amotas
     dump_ota_status();
+    demo_ppg_polling_HRD();
+
 
     while(1)
     {
