@@ -29,6 +29,7 @@
 #include "apollo3_uart.h"
 #include "apollo3_amotas.h"
 #include "apollo3_ios.h"
+#include "apollo3_rtc.h"
 #include "apollo_delay2run.h"
 #include "apollo_message.h"
 
@@ -159,10 +160,31 @@ main(void)
     // Print the sw infomation.
     END_LINE;
     PR_INFO("Apollo 3 Blue for Sensor Hub, SW ver:%02x.%02x.%02x", APOLLO3_HUB_VER0,APOLLO3_HUB_VER1, APOLLO3_HUB_VER2);
+    PR_INFO("Build on %s at %s.", __DATE__, __TIME__);
 
     // init amotas
     dump_ota_status();
-    demo_ppg_polling_HRD();
+    //demo_ppg_polling_HRD();
+    rtc_init();
+    //while (1)
+    {
+        am_hal_rtc_time_get(&hal_time);
+        am_util_stdio_printf("\tIt is now ");
+        am_util_stdio_printf("%d : ", hal_time.ui32Hour);
+        am_util_stdio_printf("%02d : ", hal_time.ui32Minute);
+        am_util_stdio_printf("%02d.", hal_time.ui32Second);
+        am_util_stdio_printf("%d ", hal_time.ui32Hundredths);
+        am_util_stdio_printf(pcWeekday[hal_time.ui32Weekday]);
+        am_util_stdio_printf(" ");
+        am_util_stdio_printf(pcMonth[hal_time.ui32Month]);
+        am_util_stdio_printf(" ");
+        am_util_stdio_printf("%d, ", hal_time.ui32DayOfMonth);
+        am_util_stdio_printf("%d", hal_time.ui32Year + 2000);
+        
+        PR_ERR("");
+        
+        am_util_delay_ms(100);
+    }
 
 
     while(1)

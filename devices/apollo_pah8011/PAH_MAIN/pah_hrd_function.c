@@ -43,7 +43,7 @@ static uint32_t Expo_time_backup[3]={0};
 static uint8_t LEDDAC_backup[3]={0};
 static float hr = 0.0f;
 
-static uint8_t g_pah8011AlgBuf[128];
+static uint8_t g_pah8011AlgBuf[14720];
 
 /*============================================================================
 STATIC FUNCTION PROTOTYPES

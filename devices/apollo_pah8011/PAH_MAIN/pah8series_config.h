@@ -77,9 +77,9 @@ Sensor & Cover Type DEFINITION
 #define __PAH8011ET
 
 //-------Cover Type---------//
-#define _DI_WALL_COVER
+//#define _DI_WALL_COVER
 //#define _DI_COVER
-//#define _PC_COVER
+#define _PC_COVER
 //#define _DI_5MM_COVER
 //#define _PC_5MM_COVER
 
