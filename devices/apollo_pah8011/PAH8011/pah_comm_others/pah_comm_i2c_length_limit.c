@@ -17,9 +17,10 @@
 #include "pah_platform_functions.h"
 
 // apollo print log
+#include "am_bsp.h"
 #include "apollo_tracelog.h"
 #include "apollo3_init.h"
-#include "am_bsp.h"
+#include "apollo3_rtc.h"
 
 #define PAH8011_IOM_MODULE 3
 #define PAH8011_ADDR       0x15
@@ -27,14 +28,20 @@
 static void* g_Pah8011Hanldle;
 static uint32_t pahBuf[2];
 
+extern volatile bool        has_interrupt_button;
+extern volatile bool        has_interrupt_pah;
+extern volatile uint64_t    interrupt_pah_timestamp;
+
 // ISR callback for the PAH8011
 static void pah_int1_handler(void)
 {
-    return;
+    has_interrupt_pah = true;
+    interrupt_pah_timestamp = get_tick_count();
 }
 
 static void pah_int2_handler(void)
 {
+    pr_err("int2\n");
     return;
 }
 /*============================================================================
@@ -188,6 +195,8 @@ void apollo_platform_init(void)
     am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, PAH8011_PIN_INT1));
     am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, PAH8011_PIN_INT2));
     NVIC_EnableIRQ(GPIO_IRQn);
+    
+    PR_ERR("irq address: %x", &has_interrupt_button);
 }
 
 /*============================================================================

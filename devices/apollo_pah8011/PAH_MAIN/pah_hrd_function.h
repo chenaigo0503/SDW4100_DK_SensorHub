@@ -136,5 +136,6 @@ void hrd_alg_task(void);
 
 
 void demo_ppg_polling_HRD(void);
+void demo_ppg_dri_HRD(void);
 
 #endif  // header guard

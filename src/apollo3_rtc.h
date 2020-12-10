@@ -27,6 +27,7 @@ extern char *pcMonth[];
 //
 //*****************************************************************************
 void rtc_init(void);
+uint32_t get_tick_count(void);
 
 
 #endif // APOLLO3_RTC_H

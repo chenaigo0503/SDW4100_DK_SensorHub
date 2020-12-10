@@ -149,7 +149,6 @@ static bool             _pah8011_read_touch_flag(uint8_t *touch_flag);
 static pah_ret          _pah8011_task_dri(uint8_t int_req, uint32_t ch_num);
 static pah_ret          _pah8011_task_polling(uint8_t int_req, uint32_t ch_num);
 
-
 /*============================================================================
 PUBLIC FUNCTION DEFINITIONS
 ============================================================================*/

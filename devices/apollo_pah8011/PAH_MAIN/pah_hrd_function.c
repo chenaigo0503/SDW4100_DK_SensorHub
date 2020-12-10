@@ -14,7 +14,7 @@
 #include "pah8series_config.h"
 
 // platform support
-//#include "system_clock.h"
+#include "apollo3_rtc.h"
 //#include "gpio_ctrl.h"
 // motion algorithm
 #if defined(ENABLE_PXI_ALG_HRD)
@@ -41,10 +41,16 @@ preprocessing preproc={
 
 static uint32_t Expo_time_backup[3]={0};
 static uint8_t LEDDAC_backup[3]={0};
-static float hr = 0.0f;
+float hr = 0.0f;
+int32_t hr_trust_level = 0;
+int16_t grade = 0;
+uint8_t hr_stat = 0;
 
 static uint8_t g_pah8011AlgBuf[14720];
 
+volatile bool        has_interrupt_button = false;
+volatile bool        has_interrupt_pah = false;
+volatile uint64_t    interrupt_pah_timestamp = 0;
 /*============================================================================
 STATIC FUNCTION PROTOTYPES
 ============================================================================*/
@@ -153,7 +159,7 @@ pah8series_ppg_dri_HRD_task(
         volatile uint64_t*  interrupt_pah_timestamp)
 {
     pah_ret ret = pah_err_unknown;
-	
+
     if (_state.status == main_status_start_healthcare)
     {
         if (*has_interrupt_pah)
@@ -261,7 +267,7 @@ pah8series_ppg_polling_HRD_task(
             #endif
                 if (is_touched || ppg_mode_flag)
                 {
-                    uint32_t timestamp = 25535; //get_tick_count();
+                    uint32_t timestamp = get_tick_count();
                     uint8_t *fifo_data = pah_get_fifo_data();
                     uint32_t fifo_data_num_per_ch = pah_fifo_data_num_per_ch();
                     uint32_t fifo_ch_num = pah_get_fifo_ch_num();
@@ -614,7 +620,13 @@ static void report_fifo_data_hr(uint64_t timestamp, uint8_t *fifo_data, uint32_t
 #endif  // ENABLE_MEMS_ZERO
         
     _state.pxialg_data.touch_flag = is_touched;
-    _state.pxialg_data.time = 100;//(uint32_t)(timestamp - _state.last_report_time);
+
+    // The count will clear after one month
+    if (timestamp < _state.last_report_time)
+        _state.pxialg_data.time = 1100;
+    else
+        _state.pxialg_data.time = (uint32_t)(timestamp - _state.last_report_time);
+
     _state.pxialg_data.ppg_data = (int32_t*)fifo_data;
     _state.pxialg_data.nf_ppg_channel = ch_num;
     _state.pxialg_data.nf_ppg_per_channel = fifo_data_num_per_ch;
@@ -700,15 +712,13 @@ static bool hr_algorithm_calculate(pah8series_data_t *pxialg_data, uint32_t ch_n
         _state.pxialg_has_init = true;
     }
     // Calculate Heart Rate
-    ret = pah8series_entrance(pxialg_data);
-    if (ret == MSG_HR_READY)
+    hr_stat = pah8series_entrance(pxialg_data);
+    if (hr_stat == MSG_HR_READY)
     {
   #ifdef demo_preprocessing_en    
         if(preproc.view_hr_event)
         {
   #endif		
-        int hr_trust_level = 0;
-        int16_t grade = 0;    
         pah8series_get_hr(&hr);
         pah8series_get_hr_trust_level(&hr_trust_level);
         pah8series_get_signal_grade(&grade);
@@ -774,7 +784,7 @@ static void start_healthcare_ppg(void)
     // PAH
     if (!pah_enter_mode(pah_ppg_mode))
         Error_Handler();
-    _state.last_report_time = 25535; // get_tick_count();
+    _state.last_report_time = get_tick_count();
 }
 #endif
 
@@ -788,7 +798,7 @@ static void start_healthcare_ppg_touch()
     if (!pah_enter_mode(pah_ppg_touch_mode))
         Error_Handler();
     
-    _state.last_report_time = 25535; //get_tick_count();
+    _state.last_report_time = get_tick_count();
 }
 
 static void start_healthcare_touch_only(void)
@@ -899,9 +909,6 @@ static void Error_Handler(void)
 
 void demo_ppg_polling_HRD(void)
 {
-static volatile bool        has_interrupt_button = false;
-
-static volatile bool        has_interrupt_pah = false;
 
 	//if sensor power up , please do pah8series_ppg_polling_HRD_init() 
 	// This Function link register and set PPG sensor to power down
@@ -926,5 +933,32 @@ static volatile bool        has_interrupt_pah = false;
         //pah8series_ppg_HRD_stop();	
 
         delay_ms(1000);
+    }    // end of while
+}
+
+void demo_ppg_dri_HRD(void)
+{
+    
+	//if sensor power up , please do pah8series_ppg_dri_HRD_init() 
+	// This Function link register and set PPG sensor to power down
+	pah8series_ppg_dri_HRD_init();
+    
+	//if customer want to use PPG Sensor , please call pah8series_ppg_HRD_start()
+	// This Function will enable the ppg sensor
+	pah8series_ppg_HRD_start();
+    
+    while (1)
+    {
+		/**pah8series_ppg_dri_HRD_task, this function only read ppg data & set raw_data format, 
+         * Customer can run this function on interrupt_handler or while loop. */
+		pah8series_ppg_dri_HRD_task(&has_interrupt_pah ,&has_interrupt_button ,&interrupt_pah_timestamp);
+
+        /**hrd_alg_task, this function will run pixart alg, Customer need run this function on 
+         * low priority task before next pah8series_ppg_dri_HRD_task() */
+        hrd_alg_task();
+
+		/**if customer want to stop PPG Sensor , please call pah8series_ppg_HRD_stop()
+		 * This Function will disable the ppg sensor. */
+		//pah8series_ppg_HRD_stop();	
     }    // end of while
 }

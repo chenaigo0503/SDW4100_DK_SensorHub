@@ -51,6 +51,13 @@ extern uint8_t g_UARTRxBuf2Sta;
 
 static uint8_t g_bmp280State = 0; // 1: temp, 2: pres, 3: all
 
+extern volatile bool        has_interrupt_button;
+extern volatile bool        has_interrupt_pah;
+extern volatile uint64_t    interrupt_pah_timestamp;
+extern float hr;
+extern int32_t hr_trust_level;
+extern int16_t grade;
+extern uint8_t hr_stat;
 //*****************************************************************************
 //
 // Related functions that participate in message management
@@ -117,13 +124,35 @@ void get_magnet_send_msg(void)
         int16_t ak_data[3];
         int16_t ak_st[2];
         ak099xx_get_data(ak_data, ak_st);
-        
+
         if (ak_st[1] &= 0x0004)
         {
             send_event_msg(APOLLO_SENSOR_4_EVNT, (uint8_t*)ak_data);
             // pr_err("x1=%d,x2=%d,x3=%d\r\n", ak_data[0], ak_data[1], ak_data[2]);
             inform_host();
         }
+    }
+}
+
+void get_irg_hr_send_msg(void)
+{
+    uint8_t hr_data[10] = {0};
+    /**pah8series_ppg_dri_HRD_task, this function only read ppg data & set raw_data format, 
+     * Customer can run this function on interrupt_handler or while loop. */
+    pah8series_ppg_dri_HRD_task(&has_interrupt_pah ,&has_interrupt_button ,&interrupt_pah_timestamp);
+
+    /**hrd_alg_task, this function will run pixart alg, Customer need run this function on 
+     * low priority task before next pah8series_ppg_dri_HRD_task() */
+    hrd_alg_task();
+    
+    if (hr_stat == MSG_HR_READY)
+    {
+        hr_stat = 0;
+        *(float*)(&hr_data[0]) = hr;
+        *(int32_t*)(&hr_data[4]) = hr_trust_level;
+        *(int16_t*)(&hr_data[4]) = grade;
+        send_event_msg(APOLLO_SENSOR_5_EVNT, (uint8_t*)hr_data);
+        inform_host();
     }
 }
 
@@ -136,6 +165,7 @@ int
 main(void)
 {
     apollo3_init();
+    rtc_init();
 
 #if (APOLLO_LOG_LEVEL)
 #if (APOLLO3_HUB_VER == 1)
@@ -152,7 +182,6 @@ main(void)
     lsm6dso_init();
     ak099xx_init();
     bmp280_init();
-    //pah8011_init();
     pah_init();
 
     am_hal_interrupt_master_enable();
@@ -164,28 +193,6 @@ main(void)
 
     // init amotas
     dump_ota_status();
-    //demo_ppg_polling_HRD();
-    rtc_init();
-    //while (1)
-    {
-        am_hal_rtc_time_get(&hal_time);
-        am_util_stdio_printf("\tIt is now ");
-        am_util_stdio_printf("%d : ", hal_time.ui32Hour);
-        am_util_stdio_printf("%02d : ", hal_time.ui32Minute);
-        am_util_stdio_printf("%02d.", hal_time.ui32Second);
-        am_util_stdio_printf("%d ", hal_time.ui32Hundredths);
-        am_util_stdio_printf(pcWeekday[hal_time.ui32Weekday]);
-        am_util_stdio_printf(" ");
-        am_util_stdio_printf(pcMonth[hal_time.ui32Month]);
-        am_util_stdio_printf(" ");
-        am_util_stdio_printf("%d, ", hal_time.ui32DayOfMonth);
-        am_util_stdio_printf("%d", hal_time.ui32Year + 2000);
-        
-        PR_ERR("");
-        
-        am_util_delay_ms(100);
-    }
-
 
     while(1)
     {
@@ -284,6 +291,15 @@ main(void)
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
+                case APOLLO_SENSOR_5_STOP_CMD:
+                    PR_ERR("will close heart rate sensor");
+                    /**if customer want to stop PPG Sensor , please call pah8series_ppg_HRD_stop()
+                    * This Function will disable the ppg sensor. */
+                    pah8series_ppg_HRD_stop();	
+                    task_list_remove(get_irg_hr_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
                 case APOLLO_SENSOR_0_START_CMD:
                     PR_ERR("will open A sensor");
 
@@ -328,6 +344,14 @@ main(void)
                     PR_ERR("will open compass sensor");
                     ak099xx_start(10);
                     task_list_insert(get_magnet_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
+                case APOLLO_SENSOR_5_START_CMD:  // compass
+                    PR_ERR("will open Heart Rate sensor");
+                    pah8series_ppg_dri_HRD_init();
+                    pah8series_ppg_HRD_start();
+                    task_list_insert(get_irg_hr_send_msg);
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 

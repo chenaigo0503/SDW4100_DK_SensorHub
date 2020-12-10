@@ -142,3 +142,21 @@ void rtc_init(void)
 
     am_hal_rtc_time_set(&hal_time);
 }
+
+// Get the timestamp
+// retval is ms
+// The count will clear after one month
+uint32_t get_tick_count(void)
+{
+    uint32_t retCountMs;
+
+    am_hal_rtc_time_get(&hal_time);
+
+    retCountMs = hal_time.ui32Hundredths * 10;
+    retCountMs += hal_time.ui32Second * 1000;
+    retCountMs += hal_time.ui32Minute * 60 * 1000;
+    retCountMs += hal_time.ui32Hour * 60 * 60 * 1000;
+    retCountMs += (hal_time.ui32DayOfMonth - 1) * 24 * 60 * 60 * 1000;
+    
+    return retCountMs;
+}
