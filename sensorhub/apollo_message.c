@@ -124,6 +124,7 @@ uint8_t send_resp_msg(uint8_t msg_id)
 {
     uint8_t send_msg[5];
     uint32_t num_write;
+    uint32_t iosUsedSpace;
 
     send_msg[0] = 0xAA;
     send_msg[1] = APOLLO_HUB_PID;
@@ -137,11 +138,22 @@ uint8_t send_resp_msg(uint8_t msg_id)
         //get version
         //ver_msg[5],ver_msg[6],ver_msg[7]
         ver_msg[7] = CalcCrc8(ver_msg, sizeof(ver_msg) - 1);
+        
+        am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
+        while (iosUsedSpace)
+        {
+            am_util_delay_ms(5);
+            am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
+            if (iosUsedSpace)
+                inform_host();
+        }
         am_hal_ios_fifo_write(g_pIOSHandle, ver_msg, sizeof(ver_msg), &num_write);
         if(sizeof(ver_msg) < num_write)
             return 1;
         
         am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
+        wait_fifo_empty();
+
         return 0;
     }
 
@@ -156,11 +168,21 @@ uint8_t send_resp_msg(uint8_t msg_id)
     send_msg[3] = 0;
 
     send_msg[4] = CalcCrc8(send_msg, sizeof(send_msg) - 1);
+
+    am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
+    while (iosUsedSpace)
+    {
+        am_util_delay_ms(5);
+        am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
+        if (iosUsedSpace)
+            inform_host();
+    }
     am_hal_ios_fifo_write(g_pIOSHandle, send_msg, sizeof(send_msg), &num_write);
     if(sizeof(send_msg) < num_write)
         return 1;
 
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
+    wait_fifo_empty();
     return 0;
 }
 
@@ -168,6 +190,7 @@ uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data)
 {
     uint8_t send_msg[17];
     uint32_t num_write;
+    uint32_t iosUsedSpace;
 
     if (msg_id < 0xc0 || msg_id > 0xe0)
     {
@@ -183,6 +206,14 @@ uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data)
     send_msg[apollo_message_len[msg_id] + 4] =
         CalcCrc8(send_msg, apollo_message_len[msg_id] + 4);
 
+    am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
+    while (iosUsedSpace)
+    {
+        am_util_delay_ms(5);
+        am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
+        if (iosUsedSpace)
+            inform_host();
+    }
     am_hal_ios_fifo_write(g_pIOSHandle, send_msg, apollo_message_len[msg_id] + 5, &num_write);
     if(sizeof(send_msg) < num_write)
         return 2;

@@ -70,49 +70,68 @@ void get_acc_send_msg(void)
     if (!lsm6dso_acceleration_get(accData))
     {
         send_event_msg(APOLLO_SENSOR_0_EVNT, (uint8_t*)accData);
-        pr_err("x1=%f,x2=%f,x3=%f\r\n", accData[0], accData[1], accData[2]);
+        //pr_err("x1=%f,x2=%f,x3=%f\r\n", accData[0], accData[1], accData[2]);
 
         inform_host();
+        wait_fifo_empty();
     }
 }
 
 void get_gyro_send_msg(void)
 {
     float gyroData[3] = {0};
-    
+
     if (!lsm6dso_angular_get(gyroData))
     {
         send_event_msg(APOLLO_SENSOR_1_EVNT, (uint8_t*)gyroData);
 
         inform_host();
+        wait_fifo_empty();
     }
 }
 
 void get_bmp280_send_msg(void)
 {
     struct bmp280_status m_statue;
-    
+
     bmp280_get_status(&m_statue);
     if (m_statue.im_update && m_statue.measuring)
     {
         struct bmp280_uncomp_data m_uncomp_data;
         int32_t temp = 0;
         uint32_t press;
+        uint8_t ret;
         
         bmp280_get_uncomp_data(&m_uncomp_data);
 
         if (g_bmp280State & 0x01) // temperature
         {
             bmp280_get_comp_temp_32bit(&temp, m_uncomp_data.uncomp_temp);
-            send_event_msg(APOLLO_SENSOR_2_EVNT, (uint8_t*)&temp);
-            inform_host();
+            ret = send_event_msg(APOLLO_SENSOR_2_EVNT, (uint8_t*)&temp);
+            if (ret)
+            {
+                PR_ERR("Temp error");
+            }
+            else
+            {
+                inform_host();
+                wait_fifo_empty();
+            }
         }
 
         if (g_bmp280State & 0x02) // pressure
         {
             bmp280_get_comp_pres_32bit(&press, m_uncomp_data.uncomp_press);
-            send_event_msg(APOLLO_SENSOR_3_EVNT, (uint8_t*)&press);
-            inform_host();
+            ret = send_event_msg(APOLLO_SENSOR_3_EVNT, (uint8_t*)&press);
+            if (ret)
+            {
+                PR_ERR("Temp error");
+            }
+            else
+            {
+                inform_host();
+                wait_fifo_empty();
+            }
         }
     }
 }
@@ -130,6 +149,7 @@ void get_magnet_send_msg(void)
             send_event_msg(APOLLO_SENSOR_4_EVNT, (uint8_t*)ak_data);
             // pr_err("x1=%d,x2=%d,x3=%d\r\n", ak_data[0], ak_data[1], ak_data[2]);
             inform_host();
+            wait_fifo_empty();
         }
     }
 }

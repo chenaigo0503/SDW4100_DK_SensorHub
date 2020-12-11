@@ -134,6 +134,7 @@ void inform_host(void)
 {
     uint32_t ui32Arg = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
     uint32_t gpio_state;
+    
     // Update FIFOCTR for host to read
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
     // Interrupt the host
@@ -148,6 +149,18 @@ void inform_host(void)
 //#else
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_HOST_INTSET, &ui32Arg);
 #endif
+}
+
+void wait_fifo_empty(void)
+{
+    uint32_t iosFifoSpace;
+
+    do
+    {
+        am_util_delay_ms(5);
+        am_hal_ios_fifo_space_used(g_pIOSHandle, &iosFifoSpace);
+    }
+    while (iosFifoSpace);
 }
 
 //*****************************************************************************

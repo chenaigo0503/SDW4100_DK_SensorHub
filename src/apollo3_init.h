@@ -19,7 +19,7 @@
 
 #define APOLLO3_HUB_VER0 0
 #define APOLLO3_HUB_VER1 0
-#define APOLLO3_HUB_VER2 12
+#define APOLLO3_HUB_VER2 13
 
 typedef struct {
   uint8_t lsm_irq1                 : 1;
@@ -48,6 +48,7 @@ extern void* g_IOMArray[6];
 // apollo3_init
 void apollo3_init(void);
 void inform_host(void);
+void wait_fifo_empty(void);
 
 // task list API
 void task_list_insert(void (*taskhandle)(void));
