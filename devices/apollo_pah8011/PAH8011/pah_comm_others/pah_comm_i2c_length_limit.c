@@ -195,8 +195,6 @@ void apollo_platform_init(void)
     am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, PAH8011_PIN_INT1));
     am_hal_gpio_interrupt_enable(AM_HAL_GPIO_MASKBIT(pGpioIntMask, PAH8011_PIN_INT2));
     NVIC_EnableIRQ(GPIO_IRQn);
-    
-    PR_ERR("irq address: %x", &has_interrupt_button);
 }
 
 /*============================================================================

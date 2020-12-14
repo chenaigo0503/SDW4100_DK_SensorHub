@@ -138,7 +138,7 @@ void rtc_init(void)
     hal_time.ui32DayOfMonth = str_to_int(&__DATE__[4]);
     hal_time.ui32Month = mthToIndex(&__DATE__[0]);
     hal_time.ui32Year = str_to_int(&__DATE__[9]);
-    hal_time.ui32Century = 21;
+    hal_time.ui32Century = 00;
 
     am_hal_rtc_time_set(&hal_time);
 }
