@@ -19,7 +19,7 @@
 
 #define APOLLO3_HUB_VER0 0
 #define APOLLO3_HUB_VER1 0
-#define APOLLO3_HUB_VER2 13
+#define APOLLO3_HUB_VER2 14
 
 typedef struct {
   uint8_t lsm_irq1                 : 1;

@@ -266,6 +266,53 @@ main(void)
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
+                case APOLLO_SET_DATE_CMD:
+                {
+                    uint16_t* set_year = (uint16_t*)msg_link_quene.front->data;
+                    uint8_t* set_month = msg_link_quene.front->data + 2;
+                    uint8_t* set_day = msg_link_quene.front->data + 3;
+
+                    PR_INFO("SET date: %04d-%02d-%02d", *set_year, *set_month, *set_day);
+
+                    if (1899 > *set_year || *set_year > 2199 || *set_month > 12 || *set_day > 31)
+                    {
+                        PR_ERR("Invalid setting date parameter");
+                        break;
+                    }
+
+                    am_hal_rtc_time_get(&hal_time);
+                    hal_time.ui32Century = ((*set_year / 100) == 20);
+                    hal_time.ui32Year = *set_year % 100;
+                    hal_time.ui32Month = *set_month - 1;
+                    hal_time.ui32DayOfMonth = *set_day;
+                    hal_time.ui32Weekday = am_util_time_computeDayofWeek(*set_year, *set_month, *set_day);
+                    am_hal_rtc_time_set(&hal_time);
+                    send_resp_msg(msg_link_quene.front->mid);
+                }
+                    break;
+
+                case APOLLO_SET_TIME_CMD:
+                {
+                    uint8_t set_hour = msg_link_quene.front->data[0];
+                    uint8_t set_minute = msg_link_quene.front->data[1];
+                    uint8_t set_sceond = msg_link_quene.front->data[2];
+
+                    PR_ERR("SET time: %02d:%02d:%02d", set_hour, set_minute, set_sceond);
+
+                    if (set_hour > 23 || set_minute > 60 || set_sceond > 60)
+                    {
+                        PR_ERR("Invalid setting time parameter");
+                        break;
+                    }
+
+                    am_hal_rtc_time_get(&hal_time);
+                    hal_time.ui32Hour = set_hour;
+                    hal_time.ui32Minute = set_minute;
+                    hal_time.ui32Second = set_sceond;
+                    am_hal_rtc_time_set(&hal_time);
+                }
+                    break;
+
                 case APOLLO_SENSOR_0_STOP_CMD:
                     PR_ERR("will close A sensor");
 
