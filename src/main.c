@@ -262,8 +262,8 @@ main(void)
                     break;
 
                 case APOLLO_FW_DATAEND_CMD:
-                    distribute_pack(0, NULL, 1);
                     send_resp_msg(msg_link_quene.front->mid);
+                    distribute_pack(0, NULL, 1);
                     break;
 
                 case APOLLO_SET_DATE_CMD:
