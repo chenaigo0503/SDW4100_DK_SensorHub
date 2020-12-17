@@ -125,7 +125,7 @@ void rtc_init(void)
     // Enable the RTC.
     //
     am_hal_rtc_osc_enable();
-    
+
     //
     // The RTC is initialized from the date and time strings that are
     // obtained from the compiler at compile time.
@@ -141,6 +141,18 @@ void rtc_init(void)
     hal_time.ui32Century = 00;
 
     am_hal_rtc_time_set(&hal_time);
+
+    // Set the alarm repeat interval to be every second.
+    am_hal_rtc_alarm_interval_set(AM_HAL_RTC_ALM_RPT_HR);
+
+    // Clear the RTC alarm interrupt.
+    am_hal_rtc_int_clear(AM_HAL_RTC_INT_ALM);
+
+    // Enable the RTC alarm interrupt.
+    am_hal_rtc_int_enable(AM_HAL_RTC_INT_ALM);
+
+    // Enable GPIO interrupts to the NVIC.
+    NVIC_EnableIRQ(RTC_IRQn);
 }
 
 // Get the timestamp
@@ -159,4 +171,24 @@ uint32_t get_tick_count(void)
     retCountMs += (hal_time.ui32DayOfMonth - 1) * 24 * 60 * 60 * 1000;
     
     return retCountMs;
+}
+
+//*****************************************************************************
+//
+// RTC ISR
+//
+//*****************************************************************************
+void am_rtc_isr(void)
+{
+    //
+    // Clear the RTC alarm interrupt.
+    //
+    am_hal_rtc_int_clear(AM_HAL_RTC_INT_ALM);
+
+    am_hal_rtc_time_get(&hal_time); \
+    am_util_stdio_printf("%02d-%02d %02d:%02d:%02d.%02d Info: Alarm", \
+        hal_time.ui32Month + 1, hal_time.ui32DayOfMonth, \
+        hal_time.ui32Hour, hal_time.ui32Minute, hal_time.ui32Second, \
+        hal_time.ui32Hundredths); \
+    am_util_stdio_printf("\n");
 }

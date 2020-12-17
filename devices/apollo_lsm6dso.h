@@ -66,6 +66,34 @@ typedef struct {
   uint8_t boot                     : 1;
 } lsm6dso_ctrl3_c_t;
 
+#define LSM6DSO_EMB_FUNC_EN_A                0x04U
+typedef struct {
+  uint8_t not_used_01              : 3;
+  uint8_t pedo_en                  : 1;
+  uint8_t tilt_en                  : 1;
+  uint8_t sign_motion_en           : 1;
+  uint8_t not_used_02              : 2;
+} lsm6dso_emb_func_en_a_t;
+
+#define LSM6DSO_EMB_FUNC_EN_B                0x05U
+typedef struct {
+  uint8_t fsm_en                   : 1;
+  uint8_t not_used_01              : 2;
+  uint8_t fifo_compr_en            : 1;
+  uint8_t pedo_adv_en              : 1;
+  uint8_t not_used_02              : 3;
+} lsm6dso_emb_func_en_b_t;
+
+#define LSM6DSO_PAGE_ADDRESS                 0x08U
+typedef struct {
+  uint8_t page_addr                : 8;
+} lsm6dso_page_address_t;
+
+#define LSM6DSO_PAGE_VALUE                   0x09U
+typedef struct {
+  uint8_t page_value               : 8;
+} lsm6dso_page_value_t;
+
 #define PROPERTY_DISABLE                (0U)
 #define PROPERTY_ENABLE                 (1U)
 
@@ -198,6 +226,13 @@ typedef struct {
   uint8_t rounding                 : 2;
   uint8_t xl_ulp_en                : 1;
 } lsm6dso_ctrl5_c_t;
+
+#define LSM6DSO_PAGE_RW                      0x17U
+typedef struct {
+  uint8_t not_used_01              : 5;
+  uint8_t page_rw                  : 2;  /* page_write + page_read */
+  uint8_t emb_func_lir             : 1;
+} lsm6dso_page_rw_t;
 
 #define LSM6DSO_CTRL9_XL                     0x18U
 typedef struct {
@@ -426,6 +461,19 @@ typedef struct {
   uint8_t not_used_02              : 3;
 } lsm6dso_i3c_bus_avb_t;
 
+#define LSM6DSO_STEP_COUNTER_L               0x62U
+#define LSM6DSO_STEP_COUNTER_H               0x63U
+#define LSM6DSO_EMB_FUNC_SRC                 0x64U
+typedef struct {
+  uint8_t not_used_01              : 2;
+  uint8_t stepcounter_bit_set      : 1;
+  uint8_t step_overflow            : 1;
+  uint8_t step_count_delta_ia      : 1;
+  uint8_t step_detected            : 1;
+  uint8_t not_used_02              : 1;
+  uint8_t pedo_rst_step            : 1;
+} lsm6dso_emb_func_src_t;
+
 #define LSM6DSO_INT_OIS                      0x6FU
 typedef struct {
   uint8_t st_xl_ois                : 2;
@@ -434,6 +482,32 @@ typedef struct {
   uint8_t lvl2_ois                 : 1;
   uint8_t int2_drdy_ois            : 1;
 } lsm6dso_int_ois_t;
+
+#define LSM6DSO_FIFO_DATA_OUT_X_L            0x79U
+#define LSM6DSO_FIFO_DATA_OUT_X_H            0x7AU
+#define LSM6DSO_FIFO_DATA_OUT_Y_L            0x7BU
+#define LSM6DSO_FIFO_DATA_OUT_Y_H            0x7CU
+#define LSM6DSO_FIFO_DATA_OUT_Z_L            0x7DU
+#define LSM6DSO_FIFO_DATA_OUT_Z_H            0x7EU
+#define LSM6DSO_PAGE_SEL                     0x02U
+typedef struct {
+  uint8_t not_used_01              : 4;
+  uint8_t page_sel                 : 4;
+} lsm6dso_page_sel_t;
+
+#define LSM6DSO_FSM_LC_TIMEOUT_L             0x17AU
+#define LSM6DSO_FSM_LC_TIMEOUT_H             0x17BU
+#define LSM6DSO_FSM_PROGRAMS                 0x17CU
+#define LSM6DSO_FSM_START_ADD_L              0x17EU
+#define LSM6DSO_FSM_START_ADD_H              0x17FU
+#define LSM6DSO_PEDO_CMD_REG                 0x183U
+typedef struct {
+  uint8_t ad_det_en                : 1;
+  uint8_t not_used_01              : 1;
+  uint8_t fp_rejection_en          : 1;
+  uint8_t carry_count_en           : 1;
+  uint8_t not_used_02              : 4;
+} lsm6dso_pedo_cmd_reg_t;
 
 typedef void (*stmdev_write_ptr) (void *, uint8_t, uint8_t*, uint32_t);
 typedef void (*stmdev_read_ptr) (void *, uint8_t, uint8_t*, uint32_t);
@@ -784,6 +858,13 @@ typedef enum {
   LSM6DSO_DRDY_PULSED  = 1,
 } lsm6dso_dataready_pulsed_t;
 
+typedef enum {
+  LSM6DSO_PEDO_DISABLE              = 0x00,
+  LSM6DSO_PEDO_BASE_MODE            = 0x01,
+  LSM6DSO_FALSE_STEP_REJ            = 0x13,
+  LSM6DSO_FALSE_STEP_REJ_ADV_MODE   = 0x33,
+} lsm6dso_pedo_md_t;
+
 //*****************************************************************************
 //
 // External function definitions
@@ -796,6 +877,7 @@ void lsm6dso_fsm_data_rate_get(stmdev_ctx_t *ctx, lsm6dso_fsm_odr_t *val);
 void lsm6dso_mem_bank_set(stmdev_ctx_t *ctx, lsm6dso_reg_access_t val);
 void lsm6dso_int1_route_set(lsm6dso_int1_type_t int1_type, bool int1_val);
 void lsm6dso_int2_route_set(lsm6dso_int2_type_t int2_type, bool int2_val);
+uint16_t lsm6dso_step_get(void);
 
 // The function that needs to be put into the loop task call
 uint8_t lsm6dso_acceleration_get(float* acc_data);

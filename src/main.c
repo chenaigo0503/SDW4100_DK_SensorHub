@@ -83,6 +83,7 @@ void get_gyro_send_msg(void)
 
     if (!lsm6dso_angular_get(gyroData))
     {
+        // pr_err("x1=%4.02f,x2=%4.02f,x3=%4.02f\r\n", gyroData[0], gyroData[1], gyroData[2]);
         send_event_msg(APOLLO_SENSOR_1_EVNT, (uint8_t*)gyroData);
 
         inform_host();
@@ -164,15 +165,31 @@ void get_irg_hr_send_msg(void)
     /**hrd_alg_task, this function will run pixart alg, Customer need run this function on 
      * low priority task before next pah8series_ppg_dri_HRD_task() */
     hrd_alg_task();
-    
+
     if (hr_stat == MSG_HR_READY)
     {
         hr_stat = 0;
         *(float*)(&hr_data[0]) = hr;
         *(int32_t*)(&hr_data[4]) = hr_trust_level;
-        *(int16_t*)(&hr_data[4]) = grade;
+        *(int16_t*)(&hr_data[8]) = grade;
         send_event_msg(APOLLO_SENSOR_5_EVNT, (uint8_t*)hr_data);
         inform_host();
+    }
+}
+
+void get_step_send_msg(void)
+{
+    uint16_t step;
+    static uint16_t last_steps;
+
+    step = lsm6dso_step_get();
+
+    if (last_steps != step)
+    {
+        PR_INFO("Get step: %d", step);
+        send_event_msg(APOLLO_SENSOR_6_EVNT, (uint8_t*)&step);
+        inform_host();
+        last_steps = step;
     }
 }
 
@@ -367,6 +384,12 @@ main(void)
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
+                case APOLLO_SENSOR_6_STOP_CMD:
+                    PR_INFO("Will open close step detect");
+                    task_list_remove(get_step_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
                 case APOLLO_SENSOR_0_START_CMD:
                     PR_ERR("will open A sensor");
 
@@ -414,11 +437,17 @@ main(void)
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
-                case APOLLO_SENSOR_5_START_CMD:  // compass
+                case APOLLO_SENSOR_5_START_CMD:  // Heart Rate
                     PR_ERR("will open Heart Rate sensor");
                     pah8series_ppg_dri_HRD_init();
                     pah8series_ppg_HRD_start();
                     task_list_insert(get_irg_hr_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
+                case APOLLO_SENSOR_6_START_CMD:  // step detect
+                    PR_INFO("Will open step detecct");
+                    task_list_insert(get_step_send_msg);
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
