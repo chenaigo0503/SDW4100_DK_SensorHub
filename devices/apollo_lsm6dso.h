@@ -206,6 +206,16 @@ typedef struct {
   uint8_t odr_xl                   : 4;
 } lsm6dso_ctrl1_xl_t;
 
+#define LSM6DSO_EMB_FUNC_STATUS              0x12U
+typedef struct {
+  uint8_t not_used_01              : 3;
+  uint8_t is_step_det              : 1;
+  uint8_t is_tilt                  : 1;
+  uint8_t is_sigmot                : 1;
+  uint8_t not_used_02              : 1;
+  uint8_t is_fsm_lc                : 1;
+} lsm6dso_emb_func_status_t;
+
 #define LSM6DSO_CTRL4_C                      0x13U
 typedef struct {
   uint8_t not_used_01              : 1;
@@ -919,6 +929,7 @@ uint8_t lsm6dso_angular_get(float* gyro_data);
 uint8_t lsm6dso_acc_cali(void);
 void lsm6dso_get_acc_cali_data(uint8_t* acc_offset);
 void lsm6dso_set_acc_cali_data(uint8_t* acc_offset);
+uint8_t lsm6dso_tilt_status(void);
 
 #ifdef __cplusplus
 }

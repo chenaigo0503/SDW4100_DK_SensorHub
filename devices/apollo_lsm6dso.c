@@ -1539,6 +1539,41 @@ void lsm6dso_xl_usr_offset_get(stmdev_ctx_t *ctx, uint8_t *val)
     *val = reg.usr_off_on_out;
 }
 
+/**
+  * @brief  Enable tilt calculation.[set]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  val      change the values of tilt_en in reg EMB_FUNC_EN_A
+  *
+  */
+void lsm6dso_tilt_sens_set(stmdev_ctx_t *ctx, uint8_t val)
+{
+    lsm6dso_emb_func_en_a_t reg;
+
+    lsm6dso_mem_bank_set(ctx, LSM6DSO_EMBEDDED_FUNC_BANK);
+    ctx->read_reg(ctx->handle, LSM6DSO_EMB_FUNC_EN_A, (uint8_t*)&reg, 1);
+    reg.tilt_en = val;
+    ctx->write_reg(ctx->handle, LSM6DSO_EMB_FUNC_EN_A, (uint8_t*)&reg, 1);
+    lsm6dso_mem_bank_set(ctx, LSM6DSO_USER_BANK);
+}
+
+/**
+  * @brief  Interrupt status bit for tilt detection.[get]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  val      change the values of is_tilt in reg EMB_FUNC_STATUS
+  *
+  */
+void lsm6dso_tilt_flag_data_ready_get(stmdev_ctx_t *ctx, uint8_t *val)
+{
+    lsm6dso_emb_func_status_t reg;
+
+    lsm6dso_mem_bank_set(ctx, LSM6DSO_EMBEDDED_FUNC_BANK);
+    ctx->read_reg(ctx->handle, LSM6DSO_EMB_FUNC_STATUS, (uint8_t*)&reg, 1);
+    *val = reg.is_tilt;
+    lsm6dso_mem_bank_set(ctx, LSM6DSO_USER_BANK);
+}
+
 //*****************************************************************************
 //
 //! @brief Configures the necessary pins for lsm6dso
@@ -1648,6 +1683,9 @@ void lsm6dso_init(void)
 
     /* Enable pedometer */
     lsm6dso_pedo_sens_set(&g_Lsm6dsoCtx, LSM6DSO_FALSE_STEP_REJ_ADV_MODE);
+
+    /* Enable Tilt in embedded function. */
+    lsm6dso_tilt_sens_set(&g_Lsm6dsoCtx, PROPERTY_ENABLE);
 
     /* Disable interrupt generation on INT pin */
     lsm6dso_int1_route_set(LSM6DSO_int1_all, 0);
@@ -1889,7 +1927,7 @@ uint8_t lsm6dso_acc_cali(void)
     lsm6dso_xl_usr_offset_x_set(&g_Lsm6dsoCtx, (uint8_t*)&acc_offset[0]);
     lsm6dso_xl_usr_offset_y_set(&g_Lsm6dsoCtx, (uint8_t*)&acc_offset[1]);
     lsm6dso_xl_usr_offset_z_set(&g_Lsm6dsoCtx, (uint8_t*)&acc_offset[2]);
-    PR_ERR("ACC: %d, %d, %d", acc_offset[0], acc_offset[1], acc_offset[2]);
+    PR_INFO("ACC offset: %d, %d, %d", acc_offset[0], acc_offset[1], acc_offset[2]);
     lsm6dso_xl_usr_offset_set(&g_Lsm6dsoCtx, PROPERTY_ENABLE);
     
     return 0;
@@ -1917,4 +1955,15 @@ void lsm6dso_set_acc_cali_data(uint8_t* acc_offset)
     lsm6dso_xl_usr_offset_y_set(&g_Lsm6dsoCtx, acc_offset++);
     lsm6dso_xl_usr_offset_z_set(&g_Lsm6dsoCtx, acc_offset);
     lsm6dso_xl_usr_offset_set(&g_Lsm6dsoCtx, PROPERTY_ENABLE);
+}
+
+uint8_t lsm6dso_tilt_status(void)
+{
+    uint8_t is_tilt;
+
+    lsm6dso_tilt_flag_data_ready_get(&g_Lsm6dsoCtx, &is_tilt);
+    if (is_tilt)
+        return 1;
+    else
+        return 0;
 }

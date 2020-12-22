@@ -45,13 +45,17 @@
 #define APOLLO_SENSOR_4_STOP_CMD   0x44     // compass
 #define APOLLO_SENSOR_5_STOP_CMD   0x45     // Heart Rate
 #define APOLLO_SENSOR_6_STOP_CMD   0x46     // Step Detec
-#define APOLLO_SENSOR_0_START_CMD  0x60     // 
+#define APOLLO_SENSOR_7_STOP_CMD   0x47     // Lift wrist detection
+
+#define APOLLO_SENSOR_0_START_CMD  0x60
 #define APOLLO_SENSOR_1_START_CMD  0x61
 #define APOLLO_SENSOR_2_START_CMD  0x62
 #define APOLLO_SENSOR_3_START_CMD  0x63
 #define APOLLO_SENSOR_4_START_CMD  0x64
 #define APOLLO_SENSOR_5_START_CMD  0x65
 #define APOLLO_SENSOR_6_START_CMD  0x66
+#define APOLLO_SENSOR_7_START_CMD  0x67
+
 #define APOLLO_SENSOR_0_STOP_RESP  0x80
 #define APOLLO_SENSOR_1_STOP_RESP  0x81
 #define APOLLO_SENSOR_2_STOP_RESP  0x82
@@ -59,6 +63,8 @@
 #define APOLLO_SENSOR_4_STOP_RESP  0x84
 #define APOLLO_SENSOR_5_STOP_RESP  0x85
 #define APOLLO_SENSOR_6_STOP_RESP  0x86
+#define APOLLO_SENSOR_7_STOP_RESP  0x87
+
 #define APOLLO_SENSOR_0_START_RESP 0xa0
 #define APOLLO_SENSOR_1_START_RESP 0xa1
 #define APOLLO_SENSOR_2_START_RESP 0xa2
@@ -66,6 +72,8 @@
 #define APOLLO_SENSOR_4_START_RESP 0xa4
 #define APOLLO_SENSOR_5_START_RESP 0xa5
 #define APOLLO_SENSOR_6_START_RESP 0xa6
+#define APOLLO_SENSOR_7_START_RESP 0xa7
+
 #define APOLLO_SENSOR_0_EVNT       0xc0
 #define APOLLO_SENSOR_1_EVNT       0xc1
 #define APOLLO_SENSOR_2_EVNT       0xc2
@@ -73,6 +81,7 @@
 #define APOLLO_SENSOR_4_EVNT       0xc4
 #define APOLLO_SENSOR_5_EVNT       0xc5
 #define APOLLO_SENSOR_6_EVNT       0xc6
+#define APOLLO_SENSOR_7_EVNT       0xc7
 
 typedef struct apollo_msg{
     uint8_t mid;
@@ -100,7 +109,7 @@ static uint8_t apollo_message_len[256] = {
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //9x
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Ax
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Bx
-    12, 12, 4, 4, 6, 10, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Cx
+    12, 12, 4, 4, 6, 10, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, //Cx
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Dx
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Ex
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Fx

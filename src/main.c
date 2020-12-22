@@ -193,6 +193,39 @@ void get_step_send_msg(void)
     }
 }
 
+void get_tilt_status_send_msg(void)
+{
+    float accData[3] = {0};
+    static uint8_t lift_wrist_state = 0;
+
+    if (lsm6dso_tilt_status())
+    {
+        if (!lsm6dso_acceleration_get(accData))
+        {
+            if (accData[2] < -860)
+            {
+                if (lift_wrist_state == 0)
+                {
+                    lift_wrist_state = 1;
+                    PR_ERR("Lift the wrist.");
+                    send_event_msg(APOLLO_SENSOR_7_EVNT, (uint8_t*)&lift_wrist_state);
+                    inform_host();
+                }
+            }
+            else if (accData[0] < -920 || accData[0] > 920)
+            {
+                if (lift_wrist_state == 1)
+                {
+                    lift_wrist_state = 0;
+                    PR_ERR("Put down the wrist.");
+                    send_event_msg(APOLLO_SENSOR_7_EVNT, (uint8_t*)&lift_wrist_state);
+                    inform_host();
+                }
+            }
+        }
+    }
+}
+
 //*****************************************************************************
 //
 // Main
@@ -412,6 +445,12 @@ main(void)
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
+                case APOLLO_SENSOR_7_STOP_CMD:
+                    PR_INFO("Will close Lift wrist detecct");
+                    task_list_remove(get_tilt_status_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
                 case APOLLO_SENSOR_0_START_CMD:
                     PR_ERR("will open A sensor");
 
@@ -470,6 +509,12 @@ main(void)
                 case APOLLO_SENSOR_6_START_CMD:  // step detect
                     PR_INFO("Will open step detecct");
                     task_list_insert(get_step_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid);
+                    break;
+
+                case APOLLO_SENSOR_7_START_CMD:  // Lift wrist detection
+                    PR_INFO("Will open Lift wrist detecct");
+                    task_list_insert(get_tilt_status_send_msg);
                     send_resp_msg(msg_link_quene.front->mid);
                     break;
 
