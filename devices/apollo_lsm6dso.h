@@ -227,6 +227,25 @@ typedef struct {
   uint8_t xl_ulp_en                : 1;
 } lsm6dso_ctrl5_c_t;
 
+#define LSM6DSO_CTRL6_C                      0x15U
+typedef struct {
+  uint8_t ftype                    : 3;
+  uint8_t usr_off_w                : 1;
+  uint8_t xl_hm_mode               : 1;
+  uint8_t den_mode                 : 3;   /* trig_en + lvl1_en + lvl2_en */
+} lsm6dso_ctrl6_c_t;
+
+#define LSM6DSO_CTRL7_G                      0x16U
+typedef struct {
+  uint8_t ois_on                   : 1;
+  uint8_t usr_off_on_out           : 1;
+  uint8_t ois_on_en                : 1;
+  uint8_t not_used_01              : 1;
+  uint8_t hpm_g                    : 2;
+  uint8_t hp_en_g                  : 1;
+  uint8_t g_hm_mode                : 1;
+} lsm6dso_ctrl7_g_t;
+
 #define LSM6DSO_PAGE_RW                      0x17U
 typedef struct {
   uint8_t not_used_01              : 5;
@@ -482,6 +501,16 @@ typedef struct {
   uint8_t lvl2_ois                 : 1;
   uint8_t int2_drdy_ois            : 1;
 } lsm6dso_int_ois_t;
+
+#define LSM6DSO_X_OFS_USR                    0x73U
+#define LSM6DSO_Y_OFS_USR                    0x74U
+#define LSM6DSO_Z_OFS_USR                    0x75U
+#define LSM6DSO_FIFO_DATA_OUT_TAG            0x78U
+typedef struct {
+  uint8_t tag_parity               : 1;
+  uint8_t tag_cnt                  : 2;
+  uint8_t tag_sensor               : 5;
+} lsm6dso_fifo_data_out_tag_t;
 
 #define LSM6DSO_FIFO_DATA_OUT_X_L            0x79U
 #define LSM6DSO_FIFO_DATA_OUT_X_H            0x7AU
@@ -865,6 +894,11 @@ typedef enum {
   LSM6DSO_FALSE_STEP_REJ_ADV_MODE   = 0x33,
 } lsm6dso_pedo_md_t;
 
+typedef enum {
+  LSM6DSO_LSb_1mg  = 0,
+  LSM6DSO_LSb_16mg = 1,
+} lsm6dso_usr_off_w_t;
+
 //*****************************************************************************
 //
 // External function definitions
@@ -882,6 +916,9 @@ uint16_t lsm6dso_step_get(void);
 // The function that needs to be put into the loop task call
 uint8_t lsm6dso_acceleration_get(float* acc_data);
 uint8_t lsm6dso_angular_get(float* gyro_data);
+uint8_t lsm6dso_acc_cali(void);
+void lsm6dso_get_acc_cali_data(uint8_t* acc_offset);
+void lsm6dso_set_acc_cali_data(uint8_t* acc_offset);
 
 #ifdef __cplusplus
 }

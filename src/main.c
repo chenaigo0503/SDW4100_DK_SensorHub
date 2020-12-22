@@ -330,6 +330,28 @@ main(void)
                 }
                     break;
 
+                case APOLLO_ACC_CALI_CMD:
+                {
+                    uint8_t ret;
+                    int8_t acc_cail[3] = {0};
+                    ret = lsm6dso_acc_cali();
+                    if (ret)
+                    {
+                        acc_cail[0] = 0xFF;
+                        send_data_msg(msg_link_quene.front->mid, (uint8_t*)acc_cail);
+                        break;
+                    }
+
+                    lsm6dso_get_acc_cali_data((uint8_t*)acc_cail);
+                    send_data_msg(msg_link_quene.front->mid, (uint8_t*)acc_cail);
+                }
+                    break;
+
+                case APOLLO_SET_ACC_CALI_CMD:
+                    lsm6dso_set_acc_cali_data(msg_link_quene.front->data);
+                    send_data_msg(msg_link_quene.front->mid, NULL);
+                    break;
+
                 case APOLLO_SENSOR_0_STOP_CMD:
                     PR_ERR("will close A sensor");
 

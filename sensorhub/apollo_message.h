@@ -33,6 +33,10 @@
 #define APOLLO_SET_DATE_RESP       0x11
 #define APOLLO_SET_TIME_CMD        0x12
 #define APOLLO_SET_TIME_RESP       0x13
+#define APOLLO_ACC_CALI_CMD        0x14
+#define APOLLO_ACC_CALI_RESP       0x15
+#define APOLLO_SET_ACC_CALI_CMD    0x16
+#define APOLLO_SET_ACC_CALI_RESP   0x17
 
 #define APOLLO_SENSOR_0_STOP_CMD   0x40     // ACC
 #define APOLLO_SENSOR_1_STOP_CMD   0x41     // GYRO
@@ -83,9 +87,9 @@ typedef struct msg_link{
 }msg_link;
 
 static uint8_t apollo_message_len[256] = {
-//  x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 xA xB xC xD xE xF
+//  x0  x1  x2 x3 x4 x5 x6 x7 x8 x9 xA xB xC xD xE xF
     0,  0,  0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //0x
-    4,  0,  3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //1x
+    4,  0,  3, 0, 0, 3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, //1x
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //2x
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //3x
     0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //4x
@@ -106,6 +110,7 @@ static uint8_t apollo_message_len[256] = {
 int unpack_data(uint8_t* message_pack);
 uint8_t send_resp_msg(uint8_t msg_id);
 uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data);
+uint8_t send_data_msg(uint8_t msg_id, uint8_t* msg_data);
 int sensor_event_enquene(uint8_t mid, uint8_t* sns_data, uint16_t sns_len);
 void msg_dequene(void);
 

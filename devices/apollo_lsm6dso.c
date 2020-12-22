@@ -1406,6 +1406,139 @@ void lsm6dso_number_of_steps_get(stmdev_ctx_t *ctx, uint8_t *buff)
     lsm6dso_mem_bank_set(ctx, LSM6DSO_USER_BANK);
 }
 
+/**
+  * @brief  Weight of XL user offset bits of registers X_OFS_USR (73h),
+  *         Y_OFS_USR (74h), Z_OFS_USR (75h).[set]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  val      change the values of usr_off_w in reg CTRL6_C
+  *
+  */
+void lsm6dso_xl_offset_weight_set(stmdev_ctx_t *ctx,
+                                     lsm6dso_usr_off_w_t val)
+{
+    lsm6dso_ctrl6_c_t reg;
+
+    ctx->read_reg(ctx->handle, LSM6DSO_CTRL6_C, (uint8_t*)&reg, 1);
+    reg.usr_off_w = (uint8_t)val;
+    ctx->write_reg(ctx->handle, LSM6DSO_CTRL6_C, (uint8_t*)&reg, 1);
+}
+
+/**
+  * @brief  Accelerometer X-axis user offset correction expressed in
+  *         two's complement, weight depends on USR_OFF_W in CTRL6_C (15h).
+  *         The value must be in the range [-127 127].[set]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  buff     buffer that contains data to write
+  *
+  */
+void lsm6dso_xl_usr_offset_x_set(stmdev_ctx_t *ctx, uint8_t *buff)
+{
+    ctx->write_reg(ctx->handle, LSM6DSO_X_OFS_USR, buff, 1);
+}
+
+/**
+  * @brief  Accelerometer X-axis user offset correction expressed in two’s
+  *         complement, weight depends on USR_OFF_W in CTRL6_C (15h).
+  *         The value must be in the range [-127 127].[get]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  buff     buffer that stores data read
+  *
+  */
+void lsm6dso_xl_usr_offset_x_get(stmdev_ctx_t *ctx, uint8_t *buff)
+{
+    ctx->read_reg(ctx->handle, LSM6DSO_X_OFS_USR, buff, 1);
+}
+
+/**
+  * @brief  Accelerometer Y-axis user offset correction expressed in two’s
+  *         complement, weight depends on USR_OFF_W in CTRL6_C (15h).
+  *         The value must be in the range [-127 127].[set]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  buff     buffer that contains data to write
+  *
+  */
+void lsm6dso_xl_usr_offset_y_set(stmdev_ctx_t *ctx, uint8_t *buff)
+{
+    ctx->write_reg(ctx->handle, LSM6DSO_Y_OFS_USR, buff, 1);
+}
+
+/**
+  * @brief  Accelerometer Y-axis user offset correction expressed in two’s
+  *         complement, weight depends on USR_OFF_W in CTRL6_C (15h).
+  *         The value must be in the range [-127 127].[get]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  buff     buffer that stores data read
+  *
+  */
+void lsm6dso_xl_usr_offset_y_get(stmdev_ctx_t *ctx, uint8_t *buff)
+{
+    ctx->read_reg(ctx->handle, LSM6DSO_Y_OFS_USR, buff, 1);
+}
+
+/**
+  * @brief  Accelerometer Z-axis user offset correction expressed in two's
+  *         complement, weight depends on USR_OFF_W in CTRL6_C (15h).
+  *         The value must be in the range [-127 127].[set]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  buff     buffer that contains data to write
+  *
+  */
+void lsm6dso_xl_usr_offset_z_set(stmdev_ctx_t *ctx, uint8_t *buff)
+{
+    ctx->write_reg(ctx->handle, LSM6DSO_Z_OFS_USR, buff, 1);
+}
+
+/**
+  * @brief  Accelerometer Z-axis user offset correction expressed in two’s
+  *         complement, weight depends on USR_OFF_W in CTRL6_C (15h).
+  *         The value must be in the range [-127 127].[get]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  buff     buffer that stores data read
+  *
+  */
+void lsm6dso_xl_usr_offset_z_get(stmdev_ctx_t *ctx, uint8_t *buff)
+{
+    ctx->read_reg(ctx->handle, LSM6DSO_Z_OFS_USR, buff, 1);
+}
+
+/**
+  * @brief  Enables user offset on out.[set]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  val      change the values of usr_off_on_out in reg CTRL7_G
+  *
+  */
+void lsm6dso_xl_usr_offset_set(stmdev_ctx_t *ctx, uint8_t val)
+{
+    lsm6dso_ctrl7_g_t reg;
+
+    ctx->read_reg(ctx->handle, LSM6DSO_CTRL7_G, (uint8_t*)&reg, 1);
+    reg.usr_off_on_out = val;
+    ctx->write_reg(ctx->handle, LSM6DSO_CTRL7_G, (uint8_t*)&reg, 1);
+}
+
+/**
+  * @brief  User offset on out flag.[get]
+  *
+  * @param  ctx      read / write interface definitions
+  * @param  val      values of usr_off_on_out in reg CTRL7_G
+  *
+  */
+void lsm6dso_xl_usr_offset_get(stmdev_ctx_t *ctx, uint8_t *val)
+{
+    lsm6dso_ctrl7_g_t reg;
+
+    ctx->read_reg(ctx->handle, LSM6DSO_CTRL7_G, (uint8_t*)&reg, 1);
+    *val = reg.usr_off_on_out;
+}
+
 //*****************************************************************************
 //
 //! @brief Configures the necessary pins for lsm6dso
@@ -1421,6 +1554,7 @@ void lsm6dso_init(void)
     uint8_t rst;
     //lsm6dso_pin_int1_route_t int1_route;
     //lsm6dso_pin_int2_route_t int2_route;
+
 
     am_hal_iom_config_t m_sIOMSpiConfig =
     {
@@ -1496,6 +1630,10 @@ void lsm6dso_init(void)
 
     /* Enable Block Data Update */
     lsm6dso_block_data_update_set(&g_Lsm6dsoCtx, PROPERTY_ENABLE);
+
+    /* Weight of XL user offset to 2^(-10) g/LSB */
+    lsm6dso_xl_offset_weight_set(&g_Lsm6dsoCtx, LSM6DSO_LSb_1mg);
+    lsm6dso_xl_usr_offset_set(&g_Lsm6dsoCtx, PROPERTY_DISABLE);
 
     /* Set XL and Gyro Output Data Rate */
     lsm6dso_xl_data_rate_set(&g_Lsm6dsoCtx, LSM6DSO_XL_ODR_26Hz);
@@ -1705,4 +1843,78 @@ uint16_t lsm6dso_step_get(void)
     lsm6dso_number_of_steps_get(&g_Lsm6dsoCtx, (uint8_t*)&step_ret);
 
     return step_ret;
+}
+
+uint8_t lsm6dso_acc_cali(void)
+{
+    float acc_cali_data[128][3];
+    float acc_total_data[3] = {0};
+    int8_t acc_offset[3] = {0};
+    uint8_t abnormal_num = 0;
+    int16_t i;
+
+    lsm6dso_xl_usr_offset_set(&g_Lsm6dsoCtx, PROPERTY_DISABLE);
+
+    for(i = 0; i < 128; i++)
+    {
+        while (lsm6dso_acceleration_get(acc_cali_data[i]))
+            am_util_delay_ms(2);
+
+        if (acc_cali_data[i][0] < -50 || acc_cali_data[i][0] > 50 ||
+            acc_cali_data[i][1] < -50 || acc_cali_data[i][1] > 50 ||
+            acc_cali_data[i][2] < 950 || acc_cali_data[i][2] > 1050)
+        {
+            abnormal_num++;
+            i--;
+            continue;
+        }
+        if (abnormal_num > 2)
+        {
+            PR_ERR("Accelerometer calibration failed: Place horizontally.");
+            return 1;
+        }
+
+        acc_total_data[0] += acc_cali_data[i][0];
+        acc_total_data[1] += acc_cali_data[i][1];
+        acc_total_data[2] += (acc_cali_data[i][2] - 1000);
+    }
+
+    acc_offset[0] = (int8_t)(acc_total_data[0] / 128);
+    acc_offset[1] = (int8_t)(acc_total_data[1] / 128);
+    acc_offset[2] = (int8_t)(acc_total_data[2] / 128);
+
+    /* Accelerometer X,Y,Z axis user offset correction expressed
+    * in two's complement.
+    */
+    lsm6dso_xl_usr_offset_x_set(&g_Lsm6dsoCtx, (uint8_t*)&acc_offset[0]);
+    lsm6dso_xl_usr_offset_y_set(&g_Lsm6dsoCtx, (uint8_t*)&acc_offset[1]);
+    lsm6dso_xl_usr_offset_z_set(&g_Lsm6dsoCtx, (uint8_t*)&acc_offset[2]);
+    PR_ERR("ACC: %d, %d, %d", acc_offset[0], acc_offset[1], acc_offset[2]);
+    lsm6dso_xl_usr_offset_set(&g_Lsm6dsoCtx, PROPERTY_ENABLE);
+    
+    return 0;
+}
+
+void lsm6dso_get_acc_cali_data(uint8_t* acc_offset)
+{
+    if (acc_offset == NULL)
+        return;
+
+    lsm6dso_xl_usr_offset_x_get(&g_Lsm6dsoCtx, acc_offset++);
+    lsm6dso_xl_usr_offset_y_get(&g_Lsm6dsoCtx, acc_offset++);
+    lsm6dso_xl_usr_offset_z_get(&g_Lsm6dsoCtx, acc_offset);
+}
+
+void lsm6dso_set_acc_cali_data(uint8_t* acc_offset)
+{
+    if (acc_offset == NULL)
+        return;
+
+    /* Accelerometer X,Y,Z axis user offset correction expressed
+    * in two's complement.
+    */
+    lsm6dso_xl_usr_offset_x_set(&g_Lsm6dsoCtx, acc_offset++);
+    lsm6dso_xl_usr_offset_y_set(&g_Lsm6dsoCtx, acc_offset++);
+    lsm6dso_xl_usr_offset_z_set(&g_Lsm6dsoCtx, acc_offset);
+    lsm6dso_xl_usr_offset_set(&g_Lsm6dsoCtx, PROPERTY_ENABLE);
 }
