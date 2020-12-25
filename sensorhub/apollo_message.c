@@ -138,7 +138,7 @@ uint8_t send_resp_msg(uint8_t msg_id)
         //get version
         //ver_msg[5],ver_msg[6],ver_msg[7]
         ver_msg[7] = CalcCrc8(ver_msg, sizeof(ver_msg) - 1);
-        
+
         am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
         while (iosUsedSpace)
         {
@@ -219,7 +219,6 @@ uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data)
         return 2;
 
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
-    wait_fifo_empty();
 
     return 0;
 }

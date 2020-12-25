@@ -44,10 +44,8 @@
 extern volatile msg_link msg_link_quene;
 extern uint8_t amotaStart;
 
-extern uint8_t g_UARTRxBuf1[128];
-extern uint8_t g_UARTRxBuf1Sta; // 0 0-0x63 0x64
-extern uint8_t g_UARTRxBuf2[128];
-extern uint8_t g_UARTRxBuf2Sta;
+extern uint8_t g_UARTRxBuf[128];
+extern uint8_t g_UARTRxBufLen;
 
 static uint8_t g_bmp280State = 0; // 1: temp, 2: pres, 3: all
 
@@ -70,7 +68,7 @@ void get_acc_send_msg(void)
     if (!lsm6dso_acceleration_get(accData))
     {
         send_event_msg(APOLLO_SENSOR_0_EVNT, (uint8_t*)accData);
-        //pr_err("x1=%f,x2=%f,x3=%f\r\n", accData[0], accData[1], accData[2]);
+        // pr_err("x1=%f,x2=%f,x3=%f\r\n", accData[0], accData[1], accData[2]);
 
         inform_host();
         wait_fifo_empty();
@@ -226,13 +224,35 @@ void get_tilt_status_send_msg(void)
     }
 }
 
+static uint8_t strtou8(char* nptr)
+{
+    uint8_t ret;
+
+    if (*nptr < '0' || *nptr > '9')
+        return 0;
+    
+    ret = (*nptr - '0') * 10;
+    nptr++;
+
+    if (*nptr < '0' || *nptr > '9')
+        return 0;
+    
+    ret += *nptr - '0';
+    return ret;
+}
+
+static void send_test_msg(char* nptr)
+{
+    uart_print("###");
+    uart_print(nptr);
+    uart_print("***\r\n");
+}
 //*****************************************************************************
 //
 // Main
 //
 //*****************************************************************************
-int
-main(void)
+int main(void)
 {
     apollo3_init();
     rtc_init();
@@ -266,31 +286,54 @@ main(void)
 
     while(1)
     {
+        // For Factory Test
+        if (g_UARTRxBufLen > 0)
+        {
+            char* reciveCmd = NULL;
+            char* reciveCmdTail = NULL;
+            uint8_t testCmd;
 
-/******************************************************************************
-        // OTA testing through UART
-        if(g_UARTRxBuf1Sta == 0x64)
-        {
-            distribute_pack(g_UARTRxBuf1Sta, g_UARTRxBuf1, 0);
-            g_UARTRxBuf1Sta = 0;
+            // Wait for a frame to complete.
+            am_util_delay_ms(3);
+            reciveCmd = strstr((const char*)g_UARTRxBuf, "###");
+            if (reciveCmd != NULL)
+            {
+                reciveCmdTail = strstr((const char*)g_UARTRxBuf, "***");
+                if (reciveCmdTail != NULL)
+                {
+                    if(reciveCmdTail - reciveCmd == 5)
+                    {
+                        reciveCmd += 3;
+                        *reciveCmdTail = '\0';
+                        testCmd = strtou8(reciveCmd);
+                        switch (testCmd)
+                        {
+                            case 1:
+                                PR_INFO("MCU status test.");
+                                send_test_msg("");
+                                break;
+                            default:
+                                PR_ERR("The test command: %d, does not exist.", testCmd);
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        PR_ERR("Command length incorrect.");
+                    }
+                }
+                else
+                {
+                    PR_ERR("Did not receive the correct command tail.");
+                }
+            }
+            else
+            {
+                PR_ERR("Did not receive the correct command header.");
+            }
+            g_UARTRxBufLen = 0;
         }
-        if(g_UARTRxBuf2Sta == 0x64)
-        {
-            distribute_pack(g_UARTRxBuf2Sta, g_UARTRxBuf2, 0);
-            g_UARTRxBuf2Sta = 0;
-        }
-        if(g_ui32UARTRxIndex == 28096)
-        {
-            // UART recive all update file
-            PR_ERR("recive all package:%x %x", g_UARTRxBuf1Sta, g_UARTRxBuf2Sta);
-            if(g_UARTRxBuf1Sta)
-                distribute_pack(g_UARTRxBuf1Sta, g_UARTRxBuf1, 1);
-            if(g_UARTRxBuf2Sta)
-                distribute_pack(g_UARTRxBuf2Sta, g_UARTRxBuf2, 1);
-            
-            while(1);
-        }
-******************************************************************************/
+
         if (msg_link_quene.front != NULL)
         {
             PR_DBG("Recive msg queue mid: %d", msg_link_quene.front->mid);

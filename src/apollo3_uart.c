@@ -22,12 +22,8 @@
 //
 //*****************************************************************************
 void *phUART;
-volatile uint32_t g_ui32UARTRxIndex = 0;
-
-uint8_t g_UARTRxBuf1[128];
-uint8_t g_UARTRxBuf1Sta = 0; // 0 0-0x63 0x64
-uint8_t g_UARTRxBuf2[128];
-uint8_t g_UARTRxBuf2Sta = 0;
+uint8_t g_UARTRxBuf[128] = {0};
+uint8_t g_UARTRxBufLen = 0;
 
 #define CHECK_ERRORS(x)                                                       \
     if ((x) != AM_HAL_STATUS_SUCCESS)                                         \
@@ -95,50 +91,16 @@ am_uart_isr(void)
         am_hal_uart_transfer_t sRead =
         {
             .ui32Direction = AM_HAL_UART_READ,
-            //.pui8Data = (uint8_t*)&g_UARTRxBlock[g_ui32UARTRxIndex],
+            .pui8Data = (uint8_t*)&g_UARTRxBuf[g_UARTRxBufLen],
             .ui32NumBytes = 23,
             .ui32TimeoutMs = 0,
             .pui32BytesTransferred = &ui32BytesRead,
         };
 
-        if (0 < g_UARTRxBuf1Sta && g_UARTRxBuf1Sta < 0x64)
-        {
-            sRead.pui8Data = (uint8_t*)&g_UARTRxBuf1[g_UARTRxBuf1Sta];
-            am_hal_uart_transfer(phUART, &sRead);
-            g_UARTRxBuf1Sta += ui32BytesRead;
-            if (g_UARTRxBuf1Sta >= 0x64)
-            {
-                g_UARTRxBuf2Sta = g_UARTRxBuf1Sta - 0x64;
-                g_UARTRxBuf1Sta = 0x64;
-                memcpy(g_UARTRxBuf2, &g_UARTRxBuf1[0x64], g_UARTRxBuf2Sta);
-            }
-        }
-        else if (0 < g_UARTRxBuf2Sta && g_UARTRxBuf2Sta < 0x64)
-        {
-            sRead.pui8Data = (uint8_t*)&g_UARTRxBuf2[g_UARTRxBuf2Sta];
-            am_hal_uart_transfer(phUART, &sRead);
-            g_UARTRxBuf2Sta += ui32BytesRead;
-            if (g_UARTRxBuf2Sta >= 0x64)
-            {
-                g_UARTRxBuf1Sta = g_UARTRxBuf2Sta - 0x64;
-                g_UARTRxBuf2Sta = 0x64;
-                memcpy(g_UARTRxBuf1, &g_UARTRxBuf2[0x64], g_UARTRxBuf1Sta);
-            }
-        }
-        else if (g_UARTRxBuf1Sta == 0)
-        {
-            sRead.pui8Data = g_UARTRxBuf1;
-            am_hal_uart_transfer(phUART, &sRead);
-            g_UARTRxBuf1Sta += ui32BytesRead;
-        }
-        else if (g_UARTRxBuf2Sta == 0)
-        {
-            sRead.pui8Data = g_UARTRxBuf2;
-            am_hal_uart_transfer(phUART, &sRead);
-            g_UARTRxBuf2Sta += ui32BytesRead;
-        }
-
-        g_ui32UARTRxIndex += ui32BytesRead;
+        am_hal_uart_transfer(phUART, &sRead);
+        g_UARTRxBufLen += ui32BytesRead;
+        if (g_UARTRxBufLen >= 128)
+            g_UARTRxBufLen = 0;
     }
 }
 
