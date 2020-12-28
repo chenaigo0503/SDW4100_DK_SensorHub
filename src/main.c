@@ -289,9 +289,14 @@ int main(void)
         // For Factory Test
         if (g_UARTRxBufLen > 0)
         {
+            uint32_t i = 0;
             char* reciveCmd = NULL;
             char* reciveCmdTail = NULL;
             uint8_t testCmd;
+            char msgBuf[128];
+            float lsm6dData[3] = {0};
+            int16_t compass_data[3];
+            int16_t compass_st[2];
 
             // Wait for a frame to complete.
             am_util_delay_ms(3);
@@ -312,8 +317,80 @@ int main(void)
                                 PR_INFO("MCU status test.");
                                 send_test_msg("");
                                 break;
+                            case 2:
+                                PR_INFO("MCU version check.");
+                                am_util_stdio_sprintf(msgBuf,"%02X.%02X.%02X", APOLLO3_HUB_VER0, APOLLO3_HUB_VER1, APOLLO3_HUB_VER2);
+                                send_test_msg(msgBuf);
+                            case 3:
+                                PR_INFO("Gravity sensor test.");
+                                for (i = 0; i < 8000; i++)
+                                {
+                                    if (!lsm6dso_acceleration_get(lsm6dData))
+                                        break;
+                                    am_util_delay_ms(10);
+                                }
+                                if (i == 8000)
+                                {
+                                    PR_ERR("Gravity sensor test ERROR.");
+                                    send_test_msg("Gravity sensor failed to pick up data.");
+                                }
+                                else
+                                {
+                                    PR_INFO("Gravity sensor test successed.");
+                                    am_util_stdio_sprintf(msgBuf, "Gravity-value: x = %4.2f, y = %4.2f, z = %4.2f",
+                                            lsm6dData[0], lsm6dData[1], lsm6dData[2]);
+                                    send_test_msg(msgBuf);
+                                }
+                                break;
+                            case 4:
+                                PR_INFO("Gyroscope sensor test.");
+                                for (i = 0; i < 8000; i++)
+                                {
+                                    if (!lsm6dso_angular_get(lsm6dData))
+                                        break;
+                                    am_util_delay_ms(10);
+                                }
+                                if (i == 8000)
+                                {
+                                    PR_ERR("Gyroscope sensor test ERROR.");
+                                    send_test_msg("Gyroscope sensor failed to pick up data.");
+                                }
+                                else
+                                {
+                                    PR_INFO("Gyroscope sensor test successed.");
+                                    am_util_stdio_sprintf(msgBuf, "Gyroscope-value: x = %4.2f, y = %4.2f, z = %4.2f",
+                                            lsm6dData[0], lsm6dData[1], lsm6dData[2]);
+                                    send_test_msg(msgBuf);
+                                }
+                                break;
+                            case 5:
+                                PR_INFO("Compass sensor test.");
+                                ak099xx_start(10);
+                                for (i = 0; i < 8000; i++)
+                                {
+                                    am_util_delay_ms(10);
+                                    ak099xx_get_data(compass_data, compass_st);
+                                    if (compass_st[1] &= 0x0004)
+                                        break;
+                                }
+                                if (i == 8000)
+                                {
+                                    PR_ERR("Compass sensor test ERROR.");
+                                    send_test_msg("Compass sensor failed to pick up data.");
+                                }
+                                else
+                                {
+                                    PR_INFO("Compass sensor test successed.");
+                                    am_util_stdio_sprintf(msgBuf, "Compass-value: x = %d, y = %d, z = %d",
+                                            compass_data[0], compass_data[1], compass_data[2]);
+                                    send_test_msg(msgBuf);
+                                }
+                                ak099xx_stop();
+                                break;
+
                             default:
                                 PR_ERR("The test command: %d, does not exist.", testCmd);
+                                send_test_msg("The test command does not exist.");
                                 break;
                         }
                     }

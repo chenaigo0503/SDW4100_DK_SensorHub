@@ -17,9 +17,9 @@
 
 #include "am_mcu_apollo.h"
 
-#define APOLLO3_HUB_VER0 0
-#define APOLLO3_HUB_VER1 0
-#define APOLLO3_HUB_VER2 16
+#define APOLLO3_HUB_VER0 0x00
+#define APOLLO3_HUB_VER1 0x00
+#define APOLLO3_HUB_VER2 0x10
 
 typedef struct {
   uint8_t lsm_irq1                 : 1;
