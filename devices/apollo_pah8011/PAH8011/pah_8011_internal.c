@@ -44,9 +44,11 @@ pah_ret pah_8011_verify_product_id(void)
         ret = pah_err_verify_device_fail;
         goto FAIL;
     }
-    
+
     debug_printf("pah_8011_verify_product_id() success. id = 0x%X \n", data);
 
+    // send PAH ID message
+    debug_printf("\r\n###PPG-ID: 0X%02X***\r\n", data);
     return pah_success;
 
 FAIL:

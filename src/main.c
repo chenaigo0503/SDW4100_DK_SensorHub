@@ -100,7 +100,7 @@ void get_bmp280_send_msg(void)
         int32_t temp = 0;
         uint32_t press;
         uint8_t ret;
-        
+
         bmp280_get_uncomp_data(&m_uncomp_data);
 
         if (g_bmp280State & 0x01) // temperature
@@ -323,13 +323,13 @@ int main(void)
                                 send_test_msg(msgBuf);
                             case 3:
                                 PR_INFO("Gravity sensor test.");
-                                for (i = 0; i < 8000; i++)
+                                for (i = 0; i < 800; i++)
                                 {
                                     if (!lsm6dso_acceleration_get(lsm6dData))
                                         break;
                                     am_util_delay_ms(10);
                                 }
-                                if (i == 8000)
+                                if (i == 800)
                                 {
                                     PR_ERR("Gravity sensor test ERROR.");
                                     send_test_msg("Gravity sensor failed to pick up data.");
@@ -344,13 +344,13 @@ int main(void)
                                 break;
                             case 4:
                                 PR_INFO("Gyroscope sensor test.");
-                                for (i = 0; i < 8000; i++)
+                                for (i = 0; i < 800; i++)
                                 {
                                     if (!lsm6dso_angular_get(lsm6dData))
                                         break;
                                     am_util_delay_ms(10);
                                 }
-                                if (i == 8000)
+                                if (i == 800)
                                 {
                                     PR_ERR("Gyroscope sensor test ERROR.");
                                     send_test_msg("Gyroscope sensor failed to pick up data.");
@@ -366,14 +366,14 @@ int main(void)
                             case 5:
                                 PR_INFO("Compass sensor test.");
                                 ak099xx_start(10);
-                                for (i = 0; i < 8000; i++)
+                                for (i = 0; i < 800; i++)
                                 {
                                     am_util_delay_ms(10);
                                     ak099xx_get_data(compass_data, compass_st);
                                     if (compass_st[1] &= 0x0004)
                                         break;
                                 }
-                                if (i == 8000)
+                                if (i == 800)
                                 {
                                     PR_ERR("Compass sensor test ERROR.");
                                     send_test_msg("Compass sensor failed to pick up data.");
@@ -386,6 +386,66 @@ int main(void)
                                     send_test_msg(msgBuf);
                                 }
                                 ak099xx_stop();
+                                break;
+                            case 6:
+                                PR_INFO("Temperature sensor test.");
+                                bmp280_set_power_mode(BMP280_NORMAL_MODE);
+                                for (i = 0; i < 800; i++)
+                                {
+                                    struct bmp280_status m_statue;
+                                    am_util_delay_ms(10);
+                                    bmp280_get_status(&m_statue);
+                                    if (m_statue.im_update && m_statue.measuring)
+                                    {
+                                        struct bmp280_uncomp_data m_uncomp_data;
+                                        int32_t temp = 0;
+                                        uint8_t ret;
+
+                                        bmp280_get_uncomp_data(&m_uncomp_data);
+                                        bmp280_get_comp_temp_32bit(&temp, m_uncomp_data.uncomp_temp);
+                                        am_util_stdio_sprintf(msgBuf, "Temperature-value: %d", temp);
+                                        send_test_msg(msgBuf);
+                                        break;
+                                    }
+                                }
+                                if (i == 800)
+                                {
+                                    PR_ERR("Temperature sensor test ERROR.");
+                                    send_test_msg("Temperature sensor failed to pick up data.");
+                                }
+                                bmp280_set_config();
+                                break;
+                            case 7:
+                                PR_INFO("Pressure sensor test.");
+                                bmp280_set_power_mode(BMP280_NORMAL_MODE);
+                                for (i = 0; i < 800; i++)
+                                {
+                                    struct bmp280_status m_statue;
+                                    am_util_delay_ms(10);
+                                    bmp280_get_status(&m_statue);
+                                    if (m_statue.im_update && m_statue.measuring)
+                                    {
+                                        struct bmp280_uncomp_data m_uncomp_data;
+                                        uint32_t press;
+                                        uint8_t ret;
+
+                                        bmp280_get_uncomp_data(&m_uncomp_data);
+                                        bmp280_get_comp_pres_32bit(&press, m_uncomp_data.uncomp_press);
+                                        am_util_stdio_sprintf(msgBuf, "Pressure-value: %d", press);
+                                        send_test_msg(msgBuf);
+                                        break;
+                                    }
+                                }
+                                if (i == 800)
+                                {
+                                    PR_ERR("Pressure sensor test ERROR.");
+                                    send_test_msg("Pressure sensor failed to pick up data.");
+                                }
+                                bmp280_set_config();
+                                break;
+                            case 8:
+                                PR_INFO("Heart-Rate sensor test.");
+                                pah8series_ppg_dri_HRD_init();
                                 break;
 
                             default:

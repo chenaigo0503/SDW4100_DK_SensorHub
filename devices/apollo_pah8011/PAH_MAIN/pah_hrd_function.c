@@ -171,7 +171,7 @@ pah8series_ppg_dri_HRD_task(
             }
             ret = pah_task();
             if (ret == pah_success)
-            {        
+            {
                 if (pah_is_ppg_mode() )
                 {
                     uint8_t ppg_mode_flag =0 ;
