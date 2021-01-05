@@ -120,7 +120,7 @@ int sensor_event_enquene(uint8_t mid, uint8_t* sns_data, uint16_t sns_len)
     return 0;
 }
 
-uint8_t send_resp_msg(uint8_t msg_id)
+/*uint8_t send_resp_msg(uint8_t msg_id)
 {
     uint8_t send_msg[5];
     uint32_t num_write;
@@ -131,7 +131,7 @@ uint8_t send_resp_msg(uint8_t msg_id)
     if(msg_id == APOLLO_GET_VERSION_CMD)
     {
         uint8_t ver_msg[8] = {0xAA, 0x01, 0x03, 0x03};
-        ver_msg[4] = APOLLO3_HUB_VER0;
+        //ver_msg[4] = APOLLO3_HUB_VER0;
         ver_msg[5] = APOLLO3_HUB_VER1;
         ver_msg[6] = APOLLO3_HUB_VER2;
 
@@ -185,45 +185,9 @@ uint8_t send_resp_msg(uint8_t msg_id)
     wait_fifo_empty();
     return 0;
 }
+*/
 
-uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data)
-{
-    uint8_t send_msg[17];
-    uint32_t num_write;
-    uint32_t iosUsedSpace;
-
-    if (msg_id < 0xc0 || msg_id > 0xe0)
-    {
-        return 1;
-    }
-    
-    send_msg[0] = 0xAA;
-    send_msg[1] = APOLLO_HUB_PID;
-    send_msg[2] = msg_id;
-    send_msg[3] = apollo_message_len[msg_id];
-    
-    memcpy(&send_msg[4], msg_data, apollo_message_len[msg_id]);
-    send_msg[apollo_message_len[msg_id] + 4] =
-        CalcCrc8(send_msg, apollo_message_len[msg_id] + 4);
-
-    am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
-    while (iosUsedSpace)
-    {
-        am_util_delay_ms(5);
-        am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
-        if (iosUsedSpace)
-            inform_host();
-    }
-    am_hal_ios_fifo_write(g_pIOSHandle, send_msg, apollo_message_len[msg_id] + 5, &num_write);
-    if(sizeof(send_msg) < num_write)
-        return 2;
-
-    am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
-
-    return 0;
-}
-
-uint8_t send_data_msg(uint8_t msg_id, uint8_t* msg_data)
+uint8_t send_resp_msg(uint8_t msg_id, uint8_t* msg_data)
 {
     uint8_t send_msg[8];
     uint32_t num_write;
@@ -267,6 +231,44 @@ uint8_t send_data_msg(uint8_t msg_id, uint8_t* msg_data)
 
     return 0;
 }
+
+uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data)
+{
+    uint8_t send_msg[17];
+    uint32_t num_write;
+    uint32_t iosUsedSpace;
+
+    if (msg_id < 0xc0 || msg_id > 0xe0)
+    {
+        return 1;
+    }
+    
+    send_msg[0] = 0xAA;
+    send_msg[1] = APOLLO_HUB_PID;
+    send_msg[2] = msg_id;
+    send_msg[3] = apollo_message_len[msg_id];
+    
+    memcpy(&send_msg[4], msg_data, apollo_message_len[msg_id]);
+    send_msg[apollo_message_len[msg_id] + 4] =
+        CalcCrc8(send_msg, apollo_message_len[msg_id] + 4);
+
+    am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
+    while (iosUsedSpace)
+    {
+        am_util_delay_ms(5);
+        am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
+        if (iosUsedSpace)
+            inform_host();
+    }
+    am_hal_ios_fifo_write(g_pIOSHandle, send_msg, apollo_message_len[msg_id] + 5, &num_write);
+    if(sizeof(send_msg) < num_write)
+        return 2;
+
+    // am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
+
+    return 0;
+}
+
 /*static uint8_t response_sys_cmd(uint8_t system_cmd)
 {
     switch(system_cmd)

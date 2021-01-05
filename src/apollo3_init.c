@@ -22,6 +22,7 @@
 //*****************************************************************************
 void* g_IOMArray[6] = {0};
 volatile apollo_irq_c_t apollo_irq;
+uint8_t sw_version[3];
 
 static void (*taskList[APOLLO_TASK_FUNMAX])(void);
 
@@ -133,6 +134,23 @@ void call_task_list(void)
         if (taskList[i])
             taskList[i]();
     }
+}
+
+void get_version(void)
+{
+    uint32_t gpio_val;
+    uint8_t hw_version;
+    am_hal_gpio_pinconfig(16, g_AM_HAL_GPIO_INPUT);
+    am_hal_gpio_state_read(16, AM_HAL_GPIO_INPUT_READ, &gpio_val);
+
+    if (gpio_val == 1)
+        hw_version = 0;
+    else
+        hw_version = 1;
+
+    sw_version[0] = hw_version;
+    sw_version[1] = APOLLO3_HUB_VER1;
+    sw_version[2] = APOLLO3_HUB_VER2;
 }
 
 //*****************************************************************************

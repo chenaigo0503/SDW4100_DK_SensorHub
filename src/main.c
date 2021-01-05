@@ -256,6 +256,7 @@ int main(void)
 {
     apollo3_init();
     rtc_init();
+    get_version();
 
 #if (APOLLO_LOG_LEVEL)
 #if (APOLLO3_HUB_VER == 1)
@@ -278,7 +279,7 @@ int main(void)
 
     // Print the sw infomation.
     END_LINE;
-    PR_INFO("Apollo 3 Blue for Sensor Hub, SW ver:%02x.%02x.%02x", APOLLO3_HUB_VER0,APOLLO3_HUB_VER1, APOLLO3_HUB_VER2);
+    PR_INFO("Apollo 3 Blue for Sensor Hub, SW ver:%02x.%02x.%02x ", sw_version[0], sw_version[1], sw_version[2]);
     PR_INFO("Build on %s at %s.", __DATE__, __TIME__);
 
     // init amotas
@@ -319,7 +320,7 @@ int main(void)
                                 break;
                             case 2:
                                 PR_INFO("MCU version check.");
-                                am_util_stdio_sprintf(msgBuf,"%02X.%02X.%02X", APOLLO3_HUB_VER0, APOLLO3_HUB_VER1, APOLLO3_HUB_VER2);
+                                am_util_stdio_sprintf(msgBuf,"%02X.%02X.%02X", sw_version[0], APOLLO3_HUB_VER1, APOLLO3_HUB_VER2);
                                 send_test_msg(msgBuf);
                             case 3:
                                 PR_INFO("Gravity sensor test.");
@@ -478,21 +479,21 @@ int main(void)
             {
 
                 case APOLLO_GET_VERSION_CMD:
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, sw_version);
                     break;
 
                 case APOLLO_FW_UPDATA_CMD:
                     amotas_init();
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_FW_UPDATA_DATA:
                     distribute_pack(msg_link_quene.front->len, msg_link_quene.front->data, 0);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_FW_DATAEND_CMD:
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     distribute_pack(0, NULL, 1);
                     break;
 
@@ -517,7 +518,7 @@ int main(void)
                     hal_time.ui32DayOfMonth = *set_day;
                     hal_time.ui32Weekday = am_util_time_computeDayofWeek(*set_year, *set_month, *set_day);
                     am_hal_rtc_time_set(&hal_time);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                 }
                     break;
 
@@ -551,32 +552,32 @@ int main(void)
                     if (ret)
                     {
                         acc_cail[0] = 0xFF;
-                        send_data_msg(msg_link_quene.front->mid, (uint8_t*)acc_cail);
+                        send_resp_msg(msg_link_quene.front->mid, (uint8_t*)acc_cail);
                         break;
                     }
 
                     lsm6dso_get_acc_cali_data((uint8_t*)acc_cail);
-                    send_data_msg(msg_link_quene.front->mid, (uint8_t*)acc_cail);
+                    send_resp_msg(msg_link_quene.front->mid, (uint8_t*)acc_cail);
                 }
                     break;
 
                 case APOLLO_SET_ACC_CALI_CMD:
                     lsm6dso_set_acc_cali_data(msg_link_quene.front->data);
-                    send_data_msg(msg_link_quene.front->mid, NULL);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_0_STOP_CMD:
                     PR_ERR("will close A sensor");
 
                     task_list_remove(get_acc_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_1_STOP_CMD:
                     PR_ERR("will close G sensor");
 
                     task_list_remove(get_gyro_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_2_STOP_CMD:
@@ -588,7 +589,7 @@ int main(void)
                         task_list_remove(get_bmp280_send_msg);
                     }
 
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_3_STOP_CMD:
@@ -600,14 +601,14 @@ int main(void)
                         task_list_remove(get_bmp280_send_msg);
                     }
 
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_4_STOP_CMD:
                     PR_ERR("will close compass sensor");
                     ak099xx_stop();
                     task_list_remove(get_magnet_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_5_STOP_CMD:
@@ -616,33 +617,33 @@ int main(void)
                     * This Function will disable the ppg sensor. */
                     pah8series_ppg_HRD_stop();	
                     task_list_remove(get_irg_hr_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_6_STOP_CMD:
                     PR_INFO("Will open close step detect");
                     task_list_remove(get_step_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_7_STOP_CMD:
                     PR_INFO("Will close Lift wrist detecct");
                     task_list_remove(get_tilt_status_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_0_START_CMD:
                     PR_ERR("will open A sensor");
 
                     task_list_insert(get_acc_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_1_START_CMD:
                     PR_ERR("will open G sensor");
 
                     task_list_insert(get_gyro_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_2_START_CMD:  // temperature
@@ -655,7 +656,7 @@ int main(void)
                     }
 
                     g_bmp280State |= 0x01;
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_3_START_CMD:  // pressure
@@ -668,14 +669,14 @@ int main(void)
                     }
 
                     g_bmp280State |= 0x02;
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_4_START_CMD:  // compass
                     PR_ERR("will open compass sensor");
                     ak099xx_start(10);
                     task_list_insert(get_magnet_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_5_START_CMD:  // Heart Rate
@@ -683,19 +684,19 @@ int main(void)
                     pah8series_ppg_dri_HRD_init();
                     pah8series_ppg_HRD_start();
                     task_list_insert(get_irg_hr_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_6_START_CMD:  // step detect
                     PR_INFO("Will open step detecct");
                     task_list_insert(get_step_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_7_START_CMD:  // Lift wrist detection
                     PR_INFO("Will open Lift wrist detecct");
                     task_list_insert(get_tilt_status_send_msg);
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 default:
@@ -704,7 +705,7 @@ int main(void)
 
                 /*case APOLLO_FW_UPDATA_CMD:
                     amotas_init();
-                    send_resp_msg(msg_link_quene.front->mid);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;*/
             }
             msg_dequene();

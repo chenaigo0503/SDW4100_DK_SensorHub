@@ -119,14 +119,26 @@ void ios_init(void)
     NVIC_EnableIRQ(IOSLAVE_IRQn);
 
     // Set up the IOSINT interrupt pin
-#if (APOLLO3_HUB_VER == 1)
-    // Use timer to control notification pin
-    delay2run_init();
-    am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_CLEAR);
-    am_hal_gpio_pinconfig(APOLLO3_IOSINT_PIN, g_AM_HAL_GPIO_OUTPUT);
-#else
-    am_hal_gpio_pinconfig(4, g_AM_BSP_GPIO_ENABLE);
-#endif
+    if (sw_version[0] == 0)
+    {
+        // Use timer to control notification pin
+        delay2run_init();
+        am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_CLEAR);
+        am_hal_gpio_pinconfig(APOLLO3_IOSINT_PIN, g_AM_HAL_GPIO_OUTPUT);
+    }
+    else
+    {
+        am_hal_gpio_pincfg_t m_ios_int_pin =
+        {
+            .uFuncSel            = AM_HAL_PIN_4_SLINT,
+            .eDriveStrength      = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
+            .eCEpol              = AM_HAL_GPIO_PIN_CEPOL_ACTIVEHIGH,
+            .eGPOutcfg           = AM_HAL_GPIO_PIN_OUTCFG_OPENDRAIN,
+        };
+
+        // Set up the IOSINT interrupt pin
+        am_hal_gpio_pinconfig(4, m_ios_int_pin);
+    }
 }
 
 // Inform host of new data available to read
@@ -134,21 +146,21 @@ void inform_host(void)
 {
     uint32_t ui32Arg = AM_IOSTEST_IOSTOHOST_DATAAVAIL_INTMASK;
     uint32_t gpio_state;
-    
+
     // Update FIFOCTR for host to read
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
     // Interrupt the host
-#if (APOLLO3_HUB_VER == 1)
-    // Just in case the GPIO hasn't pulled down yet
-    am_hal_gpio_state_read(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_READ, &gpio_state);
-    if (gpio_state == 1)
-        am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_CLEAR);
+    if (sw_version[0] == 0)
+    {
+        // Just in case the GPIO hasn't pulled down yet
+        am_hal_gpio_state_read(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_READ, &gpio_state);
+        if (gpio_state == 1)
+            am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_CLEAR);
 
-    delay_to_run(50, pulldown_iosint, NULL);
-    am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_SET);
-//#else
+        delay_to_run(50, pulldown_iosint, NULL);
+        am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_SET);
+    }
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_HOST_INTSET, &ui32Arg);
-#endif
 }
 
 void wait_fifo_empty(void)

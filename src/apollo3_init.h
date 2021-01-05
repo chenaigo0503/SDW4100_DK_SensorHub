@@ -17,9 +17,8 @@
 
 #include "am_mcu_apollo.h"
 
-#define APOLLO3_HUB_VER0 0x00
 #define APOLLO3_HUB_VER1 0x00
-#define APOLLO3_HUB_VER2 0x11
+#define APOLLO3_HUB_VER2 0x12
 
 typedef struct {
   uint8_t lsm_irq1                 : 1;
@@ -38,6 +37,7 @@ extern volatile apollo_irq_c_t apollo_irq;
 //
 //*****************************************************************************
 extern void* g_IOMArray[6];
+extern uint8_t sw_version[3];
 
 // HW VER v1 Not use SWO
 #define APOLLO3_HUB_VER 1
@@ -56,6 +56,7 @@ void task_list_remove(void (*taskhandle)(void));
 uint8_t task_list_num_get(void);
 void empty_task_list(void);
 void call_task_list(void);
+void get_version(void);
 
 
 #endif // APOLLO3_INIT_H
