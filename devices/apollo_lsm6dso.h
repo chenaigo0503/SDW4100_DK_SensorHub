@@ -28,9 +28,7 @@ extern "C"
 {
 #endif
 
-#if (APOLLO3_HUB_VER == 1)
 #define LSM6DSO_PIN_CE     4
-#endif
 #define LSM6DSO_IOM_MODULE 0
 #define LSM6DSO_PIN_INT1   14
 #define LSM6DSO_PIN_INT2   15

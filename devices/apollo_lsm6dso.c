@@ -79,18 +79,16 @@ static void lsm6d_read(void *handle, uint8_t reg, uint8_t *bufp,
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
 
-#if (APOLLO3_HUB_VER == 1)
-    am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_CLEAR);
-#else
+    if (sw_version[0] == 0)
+        am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_CLEAR);
+    else
     Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
-#endif
 
     //PR_ERR("R: %d", am_hal_iom_blocking_transfer(handle, &Transaction));
     am_hal_iom_blocking_transfer(handle, &Transaction);
     memcpy(bufp, lsmBuffer, len);
-#if (APOLLO3_HUB_VER == 1)
-    am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_SET);
-#endif
+    if (sw_version[0] == 0)
+        am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_SET);
 }
 
 /*
@@ -121,17 +119,15 @@ static void lsm6d_write(void *handle, uint8_t reg, uint8_t *bufp,
     Transaction.ui32PauseCondition = 0;
     Transaction.ui32StatusSetClr = 0;
 
-#if (APOLLO3_HUB_VER == 1)
-    am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_CLEAR);
-#else
-    Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
-#endif
+    if (sw_version[0] == 0)
+        am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_CLEAR);
+    else
+        Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
 
     //PR_ERR("W: %d", am_hal_iom_blocking_transfer(handle, &Transaction));
     am_hal_iom_blocking_transfer(handle, &Transaction);
-#if (APOLLO3_HUB_VER == 1)
-    am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_SET);
-#endif
+    if (sw_version[0] == 0)
+        am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_SET);
 }
 
 /**
@@ -1597,7 +1593,7 @@ void lsm6dso_init(void)
         .ui32ClockFreq = AM_HAL_IOM_8MHZ,
         .eSpiMode = AM_HAL_IOM_SPI_MODE_0,
     };
-    
+
     am_hal_gpio_pincfg_t m_lsm6dsoGpioInt1 = 
     {
         .uFuncSel = AM_HAL_PIN_14_GPIO,
@@ -1624,11 +1620,16 @@ void lsm6dso_init(void)
     g_Lsm6dsoCtx.write_reg = lsm6d_write;
 
     // Configure the IOM pins.
-#if (APOLLO3_HUB_VER == 1)
-    am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_SET);
-    am_hal_gpio_pinconfig(LSM6DSO_PIN_CE, g_AM_HAL_GPIO_OUTPUT_8);
-#endif
     am_bsp_iom_pins_enable(LSM6DSO_IOM_MODULE, AM_HAL_IOM_SPI_MODE);
+    if (sw_version[0] == 0)
+    {
+        am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_SET);
+        am_hal_gpio_pinconfig(LSM6DSO_PIN_CE, g_AM_HAL_GPIO_OUTPUT_8);
+    }
+    else
+    {
+        am_hal_gpio_pinconfig(AM_BSP_GPIO_IOM0_CS, g_AM_BSP_GPIO_IOM0_CS);
+    }
 
     // Enable the IOM.
     am_hal_iom_enable(g_Lsm6dsoCtx.handle);
