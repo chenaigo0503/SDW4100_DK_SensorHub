@@ -45,6 +45,7 @@ float hr = 0.0f;
 int32_t hr_trust_level = 0;
 int16_t grade = 0;
 uint8_t hr_stat = 0;
+uint8_t touch_stat;
 
 static uint8_t g_pah8011AlgBuf[14720];
 
@@ -335,10 +336,12 @@ pah8series_touch_mode_dri_task(
                 bool touch_flag;
                 pah_read_touch_flag(&touch_flag);
                 if (touch_flag)
-                {        
+                {
+                    touch_stat = 0x11;
                     debug_printf("Touch \n");
                 }else
-                {        
+                {
+                    touch_stat = 0x10;
                     debug_printf("No Touch \n");
                 }
             }

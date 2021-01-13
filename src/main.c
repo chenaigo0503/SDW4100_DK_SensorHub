@@ -56,6 +56,8 @@ extern float hr;
 extern int32_t hr_trust_level;
 extern int16_t grade;
 extern uint8_t hr_stat;
+extern uint8_t touch_stat;
+
 //*****************************************************************************
 //
 // Related functions that participate in message management
@@ -171,6 +173,19 @@ void get_irg_hr_send_msg(void)
         *(int32_t*)(&hr_data[4]) = hr_trust_level;
         *(int16_t*)(&hr_data[8]) = grade;
         send_event_msg(APOLLO_SENSOR_5_EVNT, (uint8_t*)hr_data);
+        inform_host();
+    }
+}
+
+void get_hr_touch_send_msg(void)
+{
+    pah8series_touch_mode_dri_task(&has_interrupt_pah ,&has_interrupt_button ,&interrupt_pah_timestamp);
+
+    if (touch_stat & 0x10)
+    {
+        touch_stat &= 0x0F;
+        PR_ERR("Get touch: %d", touch_stat);
+        send_event_msg(APOLLO_SENSOR_5_EVNT, &touch_stat);
         inform_host();
     }
 }
@@ -632,6 +647,12 @@ int main(void)
                     send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
+                case APOLLO_SENSOR_8_STOP_CMD:
+                    PR_INFO("Will close take off wrist detecct");
+                    task_list_remove(get_hr_touch_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
+                    break;
+
                 case APOLLO_SENSOR_0_START_CMD:
                     PR_ERR("will open A sensor");
 
@@ -696,6 +717,14 @@ int main(void)
                 case APOLLO_SENSOR_7_START_CMD:  // Lift wrist detection
                     PR_INFO("Will open Lift wrist detecct");
                     task_list_insert(get_tilt_status_send_msg);
+                    send_resp_msg(msg_link_quene.front->mid, NULL);
+                    break;
+
+                case APOLLO_SENSOR_8_START_CMD:  // take off wrist detection
+                    PR_INFO("Will open take off wrist detecct");
+                    pah8series_ppg_dri_HRD_init();
+                    pah8series_touch_mode_start();
+                    task_list_insert(get_hr_touch_send_msg);
                     send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
