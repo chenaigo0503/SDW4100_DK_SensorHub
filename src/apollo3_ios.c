@@ -128,6 +128,7 @@ void ios_init(void)
     }
     else
     {
+#if 0        
         am_hal_gpio_pincfg_t m_ios_int_pin =
         {
             .uFuncSel            = AM_HAL_PIN_4_SLINT,
@@ -138,6 +139,12 @@ void ios_init(void)
 
         // Set up the IOSINT interrupt pin
         am_hal_gpio_pinconfig(4, m_ios_int_pin);
+#else
+        // Use timer to control notification pin
+        delay2run_init();
+        am_hal_gpio_state_write(4, AM_HAL_GPIO_OUTPUT_CLEAR);
+        am_hal_gpio_pinconfig(4, g_AM_HAL_GPIO_OUTPUT);
+#endif         
     }
 }
 
@@ -159,7 +166,19 @@ void inform_host(void)
 
         delay_to_run(50, pulldown_iosint, NULL);
         am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_SET);
+    } 
+    else
+    {
+        am_hal_gpio_state_read(4, AM_HAL_GPIO_OUTPUT_READ, &gpio_state);
+        if (gpio_state == 1)
+        {
+            am_hal_gpio_state_write(4, AM_HAL_GPIO_OUTPUT_CLEAR);
+        }
+        
+        delay_to_run(50, pulldown_iosint, NULL);
+        am_hal_gpio_state_write(4, AM_HAL_GPIO_OUTPUT_SET);
     }
+    
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_HOST_INTSET, &ui32Arg);
 }
 

@@ -215,7 +215,7 @@ bool pah_comm_write(uint8_t addr, uint8_t data)
     }
 
 	if(addr!=0x7F)
-        pr_info("B:%x,R:%x,D:%x\n",_curr_bank,addr,data);
+        pr_info("B:%x,R:%x,D:%x\r\n",_curr_bank,addr,data);
 	
     return i2c_write_reg(addr, data);
 }

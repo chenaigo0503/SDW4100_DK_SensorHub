@@ -174,7 +174,7 @@ bool pah_init_with_flags(const pah_flags_s *flags)
 {
     pah_ret ret = pah_err_unknown;
 
-    debug_printf(">>>> pah_init()\n");
+    debug_printf(">>>> pah_init()\r\n");
 
     if (!flags)
     {
@@ -881,13 +881,13 @@ static bool _pah8011_update_flag(void)
     return true;
 
 FAIL:
-    debug_printf("_pah8011_update_flag fail \n");
+    debug_printf("_pah8011_update_flag fail\r\n");
     return false;
 }
 
 static bool _pah8011_shutdown(void)
 {
-    debug_printf("_pah8011_shutdown() \n");
+    debug_printf("_pah8011_shutdown()\r\n");
 
     if (!pah_comm_write(0x7F, 0x04))    //bank4
         goto FAIL;

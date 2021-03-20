@@ -95,13 +95,13 @@ bool pah8011_reg_array_init(uint8_t mode)
 #if defined (ENABLE_PXI_LINK_HRD_REG) || defined (ENABLE_PXI_LINK_HRV_REG) || defined( ENABLE_PXI_LINK_RR_REG)	
 	if ((mode == pah8011_alg_HR  ) || (mode == pah8011_alg_HRV  ) || (mode == pah8011_alg_RR) )
     {
-		    g_state.alg_work_mode = mode;
+        g_state.alg_work_mode = mode;
         g_state.init_register_array = pah8011_init_register_array;
         g_state.touch_register_array = pah8011_touch_register_array;
         g_state.ppg_register_array = pah8011_ppg_20hz_register_array;
         g_state.init_register_array_length = ARRAY_SIZE(pah8011_init_register_array);
-		    g_state.mode_register_array_length = ARRAY_SIZE(pah8011_touch_register_array);
-		    g_state.reg_version = PAH_DRIVER_8011_REG_VERSION_HR;
+		g_state.mode_register_array_length = ARRAY_SIZE(pah8011_touch_register_array);
+		g_state.reg_version = PAH_DRIVER_8011_REG_VERSION_HR;
     }
 #endif	
 	
@@ -115,20 +115,22 @@ bool pah8011_reg_array_init(uint8_t mode)
     {
         if (g_state.init_register_array[i][0] == 0x21)
         {
-			      g_state.ppg_ch_enabled[pah8011_ppg_ch_a] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
-			      g_state.fifo_ch_enabled[pah8011_ppg_ch_a] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 3)&PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
-			      debug_printf("ppg_ch_enabled[pah8011_ppg_ch_a] = %d  fifo_ch_enabled[pah8011_ppg_ch_a] = %d \n",g_state.ppg_ch_enabled[pah8011_ppg_ch_a],g_state.fifo_ch_enabled[pah8011_ppg_ch_a]);
-        }else if (g_state.init_register_array[i][0] == 0x23)
+            g_state.ppg_ch_enabled[pah8011_ppg_ch_a] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
+            g_state.fifo_ch_enabled[pah8011_ppg_ch_a] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 3)&PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
+			debug_printf("ppg_ch_enabled[pah8011_ppg_ch_a] = %d  fifo_ch_enabled[pah8011_ppg_ch_a] = %d\r\n",g_state.ppg_ch_enabled[pah8011_ppg_ch_a],g_state.fifo_ch_enabled[pah8011_ppg_ch_a]);
+        } 
+        else if (g_state.init_register_array[i][0] == 0x23)
         {
-			      g_state.ppg_ch_enabled[pah8011_ppg_ch_b] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
-			      g_state.fifo_ch_enabled[pah8011_ppg_ch_b] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 3)&PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
-			      debug_printf("ppg_ch_enabled[pah8011_ppg_ch_b] = %d  fifo_ch_enabled[pah8011_ppg_ch_b] = %d \n",g_state.ppg_ch_enabled[pah8011_ppg_ch_b],g_state.fifo_ch_enabled[pah8011_ppg_ch_b]);
-        }else if (g_state.init_register_array[i][0] == 0x25)
+			g_state.ppg_ch_enabled[pah8011_ppg_ch_b] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
+			g_state.fifo_ch_enabled[pah8011_ppg_ch_b] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 3)&PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
+			debug_printf("ppg_ch_enabled[pah8011_ppg_ch_b] = %d  fifo_ch_enabled[pah8011_ppg_ch_b] = %d\r\n",g_state.ppg_ch_enabled[pah8011_ppg_ch_b],g_state.fifo_ch_enabled[pah8011_ppg_ch_b]);
+        } 
+        else if (g_state.init_register_array[i][0] == 0x25)
         {    
-			      g_state.ppg_ch_enabled[pah8011_ppg_ch_c] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
-			      g_state.fifo_ch_enabled[pah8011_ppg_ch_c] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 3)&PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
-			      debug_printf("ppg_ch_enabled[pah8011_ppg_ch_c] = %d  fifo_ch_enabled[pah8011_ppg_ch_c] = %d \n",g_state.ppg_ch_enabled[pah8011_ppg_ch_c],g_state.fifo_ch_enabled[pah8011_ppg_ch_c]);
-		    }
+            g_state.ppg_ch_enabled[pah8011_ppg_ch_c] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
+			g_state.fifo_ch_enabled[pah8011_ppg_ch_c] = PAH_CHECK_BIT(g_state.init_register_array[i][1], 3)&PAH_CHECK_BIT(g_state.init_register_array[i][1], 0);
+			debug_printf("ppg_ch_enabled[pah8011_ppg_ch_c] = %d  fifo_ch_enabled[pah8011_ppg_ch_c] = %d\r\n",g_state.ppg_ch_enabled[pah8011_ppg_ch_c],g_state.fifo_ch_enabled[pah8011_ppg_ch_c]);
+        }
     }
 	
 	return true;

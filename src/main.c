@@ -415,7 +415,6 @@ int main(void)
                                     {
                                         struct bmp280_uncomp_data m_uncomp_data;
                                         int32_t temp = 0;
-                                        uint8_t ret;
 
                                         bmp280_get_uncomp_data(&m_uncomp_data);
                                         bmp280_get_comp_temp_32bit(&temp, m_uncomp_data.uncomp_temp);
@@ -443,7 +442,6 @@ int main(void)
                                     {
                                         struct bmp280_uncomp_data m_uncomp_data;
                                         uint32_t press;
-                                        uint8_t ret;
 
                                         bmp280_get_uncomp_data(&m_uncomp_data);
                                         bmp280_get_comp_pres_32bit(&press, m_uncomp_data.uncomp_press);
@@ -489,7 +487,7 @@ int main(void)
 
         if (msg_link_quene.front != NULL)
         {
-            PR_DBG("Recive msg queue mid: %d", msg_link_quene.front->mid);
+            PR_DBG("Recive msg queue mid: 0x%02x", msg_link_quene.front->mid);
             switch(msg_link_quene.front->mid)
             {
 
@@ -577,26 +575,27 @@ int main(void)
                     break;
 
                 case APOLLO_SET_ACC_CALI_CMD:
+                    PR_INFO("set cali accel command");
                     lsm6dso_set_acc_cali_data(msg_link_quene.front->data);
                     send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_0_STOP_CMD:
-                    PR_ERR("will close A sensor");
+                    PR_INFO("will close A sensor");
 
                     task_list_remove(get_acc_send_msg);
                     send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_1_STOP_CMD:
-                    PR_ERR("will close G sensor");
+                    PR_INFO("will close G sensor");
 
                     task_list_remove(get_gyro_send_msg);
                     send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_2_STOP_CMD:
-                    PR_ERR("will close Temperature sensor");
+                    PR_INFO("will close Temperature sensor");
                     g_bmp280State &= ~(0x01);
                     if (g_bmp280State == 0)
                     {
@@ -608,7 +607,7 @@ int main(void)
                     break;
 
                 case APOLLO_SENSOR_3_STOP_CMD:
-                    PR_ERR("will close pressure sensor");
+                    PR_INFO("will close pressure sensor");
                     g_bmp280State &= ~(0x02);
                     if (g_bmp280State == 0)
                     {
@@ -620,14 +619,14 @@ int main(void)
                     break;
 
                 case APOLLO_SENSOR_4_STOP_CMD:
-                    PR_ERR("will close compass sensor");
+                    PR_INFO("will close compass sensor");
                     ak099xx_stop();
                     task_list_remove(get_magnet_send_msg);
                     send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_5_STOP_CMD:
-                    PR_ERR("will close heart rate sensor");
+                    PR_INFO("will close heart rate sensor");
                     /**if customer want to stop PPG Sensor , please call pah8series_ppg_HRD_stop()
                     * This Function will disable the ppg sensor. */
                     pah8series_ppg_HRD_stop();	
@@ -654,21 +653,21 @@ int main(void)
                     break;
 
                 case APOLLO_SENSOR_0_START_CMD:
-                    PR_ERR("will open A sensor");
+                    PR_INFO("will open A sensor");
 
                     task_list_insert(get_acc_send_msg);
                     send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_1_START_CMD:
-                    PR_ERR("will open G sensor");
+                    PR_INFO("will open G sensor");
 
                     task_list_insert(get_gyro_send_msg);
                     send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_2_START_CMD:  // temperature
-                    PR_ERR("will open Temperature sensor");
+                    PR_INFO("will open Temperature sensor");
 
                     if (!g_bmp280State)
                     {
@@ -681,7 +680,7 @@ int main(void)
                     break;
 
                 case APOLLO_SENSOR_3_START_CMD:  // pressure
-                    PR_ERR("will open pressure sensor");
+                    PR_INFO("will open pressure sensor");
 
                     if (!g_bmp280State)
                     {
@@ -694,14 +693,14 @@ int main(void)
                     break;
 
                 case APOLLO_SENSOR_4_START_CMD:  // compass
-                    PR_ERR("will open compass sensor");
+                    PR_INFO("will open compass sensor");
                     ak099xx_start(10);
                     task_list_insert(get_magnet_send_msg);
                     send_resp_msg(msg_link_quene.front->mid, NULL);
                     break;
 
                 case APOLLO_SENSOR_5_START_CMD:  // Heart Rate
-                    PR_ERR("will open Heart Rate sensor");
+                    PR_INFO("will open Heart Rate sensor");
                     pah8series_ppg_dri_HRD_init();
                     pah8series_ppg_HRD_start();
                     task_list_insert(get_irg_hr_send_msg);

@@ -370,8 +370,6 @@ static void amotas_init_ota(void)
 void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
 {
     eAmotaStatus status = AMOTA_STATUS_SUCCESS;
-    uint32_t ver = 0;
-    uint32_t fwCrc = 0;
     bool resumeTransfer = false;
     bool bResult = false;
     uint8_t data[4] = {0};

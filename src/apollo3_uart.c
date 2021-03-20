@@ -200,4 +200,6 @@ apollo3_uart_init(void)
     am_hal_uart_interrupt_clear(phUART, AM_HAL_UART_INT_RX | AM_HAL_UART_INT_RX_TMOUT);
     am_hal_uart_interrupt_enable(phUART, AM_HAL_UART_INT_RX | AM_HAL_UART_INT_RX_TMOUT);
     NVIC_EnableIRQ((IRQn_Type)(UART0_IRQn + AM_BSP_UART_PRINT_INST));
+    
+    return 0;
 }
