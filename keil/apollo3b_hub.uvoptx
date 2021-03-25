@@ -140,7 +140,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>JL2CM3</Key>
-          <Name>-U59414010 -O2510 -S8 -ZTIFSpeedSel50000 -A0 -C0 -JU1 -JI127.0.0.1 -JP0 -RST0 -N00("no SW-DP found") -D00(03000467) -L00(0) -TO1 -TC3000000 -TP21 -TDS2 -TDT0 -TDC1F -TIE1 -TIP0 -TB1 -TFE0 -FO31 -FD10000000 -FC4000 -FN1 -FF0Apollo3.FLM -FS00 -FL0100000 -FP0($$Device:AMA3B1KK-KBR$Flash\Apollo3.FLM)</Name>
+          <Name>-U68000009 -O2510 -S8 -ZTIFSpeedSel50000 -A0 -C0 -JU1 -JI127.0.0.1 -JP0 -RST0 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -TO1 -TC3000000 -TP21 -TDS2 -TDT0 -TDC1F -TIE1 -TIP0 -TB1 -TFE0 -FO15 -FD10000000 -FC4000 -FN1 -FF0Apollo3.FLM -FS00 -FL0100000 -FP0($$Device:AMA3B1KK-KBR$Flash\Apollo3.FLM)</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -429,7 +429,7 @@
 
   <Group>
     <GroupName>apollo_pah8011</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -497,7 +497,7 @@
       <GroupNumber>6</GroupNumber>
       <FileNumber>21</FileNumber>
       <FileType>1</FileType>
-      <tvExp>1</tvExp>
+      <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\devices\apollo_pah8011\PAH_MAIN\pah_hrd_function.c</PathWithFileName>
@@ -533,7 +533,7 @@
 
   <Group>
     <GroupName>third_party</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>

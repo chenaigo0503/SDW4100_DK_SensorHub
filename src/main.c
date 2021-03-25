@@ -108,6 +108,9 @@ void get_bmp280_send_msg(void)
         if (g_bmp280State & 0x01) // temperature
         {
             bmp280_get_comp_temp_32bit(&temp, m_uncomp_data.uncomp_temp);
+            
+            //PR_ERR("%s, temp = %d", __func__, temp);
+            
             ret = send_event_msg(APOLLO_SENSOR_2_EVNT, (uint8_t*)&temp);
             if (ret)
             {
@@ -185,7 +188,7 @@ void get_hr_touch_send_msg(void)
     {
         touch_stat &= 0x0F;
         PR_ERR("Get touch: %d", touch_stat);
-        send_event_msg(APOLLO_SENSOR_5_EVNT, &touch_stat);
+        send_event_msg(APOLLO_SENSOR_8_EVNT, &touch_stat);
         inform_host();
     }
 }
