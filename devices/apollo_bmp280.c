@@ -77,7 +77,7 @@ void bmp280_read(uint8_t reg, uint8_t *bufp, uint32_t len)
 static void bmp280_write(uint8_t reg, uint8_t *bufp, uint32_t len)
 {
     am_hal_iom_transfer_t       Transaction;
-    
+
     if (bufp == NULL)
         return;
 
@@ -133,11 +133,11 @@ int8_t bmp280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint8_t len)
 
     if (len > 4)
         len = 4;
-    
+
     if (len != 0)
     {
         temp_buff[0] = reg_data[0];
-        
+
         /* Burst write mode */
         if (len > 1)
         {
@@ -152,7 +152,7 @@ int8_t bmp280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint8_t len)
 
         bmp280_write(reg_addr[0], temp_buff, temp_len);
     }
-    
+
 }
 /*!
  * @brief This API triggers the soft reset of the sensor.
@@ -246,7 +246,7 @@ void bmp280_init(void)
     {
         PR_INFO("BMP280 get ID success.");
     }
-    
+
     bmp280_soft_reset();
     get_calib_param();
 
@@ -265,7 +265,7 @@ static void conf_sensor(uint8_t mode)
 {
     uint8_t temp[2] = {0};
     uint8_t reg_addr[2] = {BMP280_CTRL_MEAS_ADDR, BMP280_CONFIG_ADDR};
-    
+
     bmp280_get_regs(BMP280_CTRL_MEAS_ADDR, temp, 2);
 
     /* Here the intention is to put the device to sleep
@@ -412,6 +412,8 @@ void bmp280_get_uncomp_data(struct bmp280_uncomp_data *uncomp_data)
 void bmp280_get_comp_temp_32bit(int32_t *comp_temp, int32_t uncomp_temp)
 {
     int32_t var1, var2;
+
+    pr_info("%s, uncomp_temp = %d\r\n", __func__, uncomp_temp);
 
     var1 =
         ((((uncomp_temp / 8) - ((int32_t) calib_param.dig_t1 << 1))) * ((int32_t) calib_param.dig_t2)) /

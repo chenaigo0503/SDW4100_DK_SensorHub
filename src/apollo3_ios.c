@@ -1,8 +1,6 @@
 //*****************************************************************************
 //
-//! @file hello_world_uart.c
-//!
-//! @brief A simple "Hello World" example using the UART peripheral.
+//! @file apollo3_ios.c
 //
 //*****************************************************************************
 
@@ -73,6 +71,7 @@ void ios_init(void)
     am_hal_ios_power_ctrl(g_pIOSHandle, AM_HAL_SYSCTRL_WAKE, false);
     am_hal_ios_configure(g_pIOSHandle, &m_IOSSpiConfig);
 #endif
+
 #ifdef APOLLO3_IOS_USE_I2C
     // I2C Slave Configuration
     am_hal_ios_config_t m_IOSI2cConfig =
@@ -114,7 +113,7 @@ void ios_init(void)
     am_hal_ios_interrupt_clear(g_pIOSHandle, AM_HAL_IOS_INT_ALL);
     am_hal_ios_interrupt_enable(g_pIOSHandle, AM_HAL_IOS_INT_ERR | AM_HAL_IOS_INT_FSIZE);
     am_hal_ios_interrupt_enable(g_pIOSHandle, AM_HAL_IOS_XCMP_INT);
-    
+
     // Set the bit in the NVIC to accept access interrupts from the IO Slave.
     NVIC_EnableIRQ(IOSLAVE_IRQn);
 
@@ -128,7 +127,7 @@ void ios_init(void)
     }
     else
     {
-#if 0        
+#if 0
         am_hal_gpio_pincfg_t m_ios_int_pin =
         {
             .uFuncSel            = AM_HAL_PIN_4_SLINT,
@@ -144,7 +143,7 @@ void ios_init(void)
         delay2run_init();
         am_hal_gpio_state_write(4, AM_HAL_GPIO_OUTPUT_CLEAR);
         am_hal_gpio_pinconfig(4, g_AM_HAL_GPIO_OUTPUT);
-#endif         
+#endif
     }
 }
 
@@ -166,7 +165,7 @@ void inform_host(void)
 
         delay_to_run(50, pulldown_iosint, NULL);
         am_hal_gpio_state_write(APOLLO3_IOSINT_PIN, AM_HAL_GPIO_OUTPUT_SET);
-    } 
+    }
     else
     {
         am_hal_gpio_state_read(4, AM_HAL_GPIO_OUTPUT_READ, &gpio_state);
@@ -174,11 +173,11 @@ void inform_host(void)
         {
             am_hal_gpio_state_write(4, AM_HAL_GPIO_OUTPUT_CLEAR);
         }
-        
+
         delay_to_run(50, pulldown_iosint, NULL);
         am_hal_gpio_state_write(4, AM_HAL_GPIO_OUTPUT_SET);
     }
-    
+
     am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_HOST_INTSET, &ui32Arg);
 }
 
@@ -215,8 +214,7 @@ void am_ioslave_ios_isr(void)
         // We should never hit this case unless the threshold has beeen set
         // incorrect, or we are unable to handle the data rate
         // ERROR!
-        am_hal_debug_assert_msg(0,
-            "Hitting underflow for the requested IOS FIFO transfer.");
+        am_hal_debug_assert_msg(0, "Hitting underflow for the requested IOS FIFO transfer.");
     }
 
     if (ui32Status & AM_HAL_IOS_INT_ERR)

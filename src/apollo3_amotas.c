@@ -253,7 +253,7 @@ static bool amotas_write2flash(uint16_t len, uint8_t *buf, uint32_t addr, bool l
         // application is trying to write to wrong address
         return false;
     }
-    
+
     FLASH_OPERATE(g_pFlash, flash_enable);
     while (ui16BytesRemaining)
     {
@@ -373,7 +373,7 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
     bool resumeTransfer = false;
     bool bResult = false;
     uint8_t data[4] = {0};
-    
+
     switch(cmd)
     {
         case AMOTA_CMD_FW_HEADER:
@@ -392,7 +392,7 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
             BYTES_TO_UINT32(amotasCb.fwHeader.version, buf + 32);
             BYTES_TO_UINT32(amotasCb.fwHeader.fwDataType, buf + 36);
             BYTES_TO_UINT32(amotasCb.fwHeader.storageType, buf + 40);
-            
+
             PR_DBG("OTA process start from beginning");
             amotasFlash.bufferIndex = 0;
             bResult = amotas_set_fw_addr();
@@ -415,7 +415,7 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
         case AMOTA_CMD_FW_DATA:
             bResult = amotas_write2flash(len, buf, amotasCb.newFwFlashInfo.addr + amotasCb.newFwFlashInfo.offset,
                         ((amotasCb.newFwFlashInfo.offset + len) == amotasCb.fwHeader.fwLength));
-        
+
             if ( bResult == false )
             {
                 PR_DBG("Data FALSE");
@@ -551,7 +551,7 @@ void distribute_pack(uint8_t len, uint8_t *buf, uint8_t isEndPack)
     static uint8_t firstPack = 0;
     static uint16_t otaBufLen = 0;
     static uint8_t packBuf[0x200] = {0};
-    
+
     while(len)
     {
         if (firstPack)
@@ -596,10 +596,10 @@ void distribute_pack(uint8_t len, uint8_t *buf, uint8_t isEndPack)
     {
         if (otaBufLen)
             amotas_packet_handler(AMOTA_CMD_FW_DATA, otaBufLen, packBuf);
-        
+
         amotas_packet_handler(AMOTA_CMD_FW_VERIFY, 0, NULL);
         amotas_packet_handler(AMOTA_CMD_FW_RESET, 0, NULL);
-        
+
         while(1);
     }
 }

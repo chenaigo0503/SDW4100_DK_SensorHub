@@ -311,7 +311,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>0</Optim>
             <oTime>1</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>AM_PACKAGE_BGA AM_PART_APOLLO3 keil</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader;..\third_party\custom\crc8;..\devices\apollo_pah8011;..\devices\apollo_pah8011\PAH_MAIN;..\devices\apollo_pah8011\PAH8011;..\devices\apollo_pah8011\PAH8011\pah_comm_others;..\devices\apollo_pah8011\PAH8011\verify;..\devices\apollo_pah8011\PxiAlg\HR\v5551</IncludePath>
+              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader;..\third_party\custom\crc8;..\devices\apollo_pah8011;..\devices\apollo_pah8011\PAH_MAIN;..\devices\apollo_pah8011\PAH8011;..\devices\apollo_pah8011\PAH8011\pah_comm_others;..\devices\apollo_pah8011\PAH8011\verify;..\devices\apollo_pah8011\PxiAlg\HR\v5551;..\third_party\nanopb</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -624,7 +624,7 @@
           <Files>
             <File>
               <FileName>startup_keil.s</FileName>
-              <FileType>1</FileType>
+              <FileType>2</FileType>
               <FilePath>../keil/startup_keil.s</FilePath>
             </File>
           </Files>
@@ -636,6 +636,31 @@
               <FileName>libam_hal.lib</FileName>
               <FileType>4</FileType>
               <FilePath>../mcu/apollo3/hal/keil/bin/libam_hal.lib</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>nanopb</GroupName>
+          <Files>
+            <File>
+              <FileName>pb_common.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\third_party\nanopb\pb_common.c</FilePath>
+            </File>
+            <File>
+              <FileName>pb_decode.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\third_party\nanopb\pb_decode.c</FilePath>
+            </File>
+            <File>
+              <FileName>pb_encode.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\third_party\nanopb\pb_encode.c</FilePath>
+            </File>
+            <File>
+              <FileName>UserInformation.pb.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\third_party\nanopb\UserInformation.pb.c</FilePath>
             </File>
           </Files>
         </Group>
