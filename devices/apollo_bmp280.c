@@ -152,8 +152,10 @@ int8_t bmp280_set_regs(uint8_t *reg_addr, const uint8_t *reg_data, uint8_t len)
 
         bmp280_write(reg_addr[0], temp_buff, temp_len);
     }
-
+    
+    return 0;
 }
+
 /*!
  * @brief This API triggers the soft reset of the sensor.
  */

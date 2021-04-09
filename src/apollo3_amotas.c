@@ -373,7 +373,10 @@ void amotas_packet_handler(eAmotaCommand cmd, uint16_t len, uint8_t *buf)
     bool resumeTransfer = false;
     bool bResult = false;
     uint8_t data[4] = {0};
-
+    status = status;
+    resumeTransfer = resumeTransfer;
+    data[0] = data[1];
+    
     switch(cmd)
     {
         case AMOTA_CMD_FW_HEADER:

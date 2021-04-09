@@ -277,7 +277,6 @@ static void send_test_msg(char* nptr)
 //*****************************************************************************
 int main(void)
 {
-    int i;
     APOLLO_HUB_RESP_RESULT_t status = APOLLO_HUB_RESP_SUCCESS;
     apollo3_init();
     rtc_init();
@@ -609,12 +608,11 @@ int main(void)
 
                     if (userInfo.latitude == 11.0)
                     {
-                        status = 0x00;
                         send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
                     }
                     else
                     {
-                        status = 0x01;
+                        status = APOLLO_HUB_RESP_FAIL;
                         send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
                     }
                     break;
@@ -641,158 +639,10 @@ int main(void)
                     break;
                 }
 
-                case APOLLO_SENSOR_0_STOP_CMD:
-                    PR_INFO("will close A sensor");
-                    task_list_remove(get_acc_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_1_STOP_CMD:
-                    PR_INFO("will close G sensor");
-                    task_list_remove(get_gyro_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_2_STOP_CMD:
-                    PR_INFO("will close Temperature sensor");
-
-                    g_bmp280State &= ~(0x01);
-                    if (g_bmp280State == 0)
-                    {
-                        bmp280_set_config();
-                        task_list_remove(get_bmp280_send_msg);
-                    }
-
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_3_STOP_CMD:
-                    PR_INFO("will close pressure sensor");
-
-                    g_bmp280State &= ~(0x02);
-                    if (g_bmp280State == 0)
-                    {
-                        bmp280_set_config();
-                        task_list_remove(get_bmp280_send_msg);
-                    }
-
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_4_STOP_CMD:
-                    PR_INFO("will close compass sensor");
-
-                    ak099xx_stop();
-                    task_list_remove(get_magnet_send_msg);
-
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_5_STOP_CMD:
-                    PR_INFO("will close heart rate sensor");
-
-                    /**if customer want to stop PPG Sensor , please call pah8series_ppg_HRD_stop()
-                    * This Function will disable the ppg sensor. */
-                    pah8series_ppg_HRD_stop();
-                    task_list_remove(get_irg_hr_send_msg);
-
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_6_STOP_CMD:
-                    PR_INFO("Will open close step detect");
-                    task_list_remove(get_step_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_7_STOP_CMD:
-                    PR_INFO("Will close Lift wrist detecct");
-                    task_list_remove(get_tilt_status_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_8_STOP_CMD:
-                    PR_INFO("Will close take off wrist detecct");
-                    task_list_remove(get_hr_touch_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_0_START_CMD:
-                    PR_INFO("will open A sensor");
-                    task_list_insert(get_acc_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_1_START_CMD:
-                    PR_INFO("will open G sensor");
-                    task_list_insert(get_gyro_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_2_START_CMD:  // temperature
-                    PR_INFO("will open Temperature sensor");
-
-                    if (!g_bmp280State)
-                    {
-                        bmp280_set_power_mode(BMP280_NORMAL_MODE);
-                        task_list_insert(get_bmp280_send_msg);
-                    }
-
-                    g_bmp280State |= 0x01;
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_3_START_CMD:  // pressure
-                    PR_INFO("will open pressure sensor");
-
-                    if (!g_bmp280State)
-                    {
-                        bmp280_set_power_mode(BMP280_NORMAL_MODE);
-                        task_list_insert(get_bmp280_send_msg);
-                    }
-
-                    g_bmp280State |= 0x02;
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_4_START_CMD:  // compass
-                    PR_INFO("will open compass sensor");
-                    ak099xx_start(10);
-                    task_list_insert(get_magnet_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_5_START_CMD:  // Heart Rate
-                    PR_INFO("will open Heart Rate sensor");
-                    pah8series_ppg_dri_HRD_init();
-                    pah8series_ppg_HRD_start();
-                    task_list_insert(get_irg_hr_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_6_START_CMD:  // step detect
-                    PR_INFO("Will open step detecct");
-                    task_list_insert(get_step_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_7_START_CMD:  // Lift wrist detection
-                    PR_INFO("Will open Lift wrist detecct");
-                    task_list_insert(get_tilt_status_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
-                case APOLLO_SENSOR_8_START_CMD:  // take off wrist detection
-                    PR_INFO("Will open take off wrist detecct");
-                    pah8series_ppg_dri_HRD_init();
-                    pah8series_touch_mode_start();
-                    task_list_insert(get_hr_touch_send_msg);
-                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
-                    break;
-
                 case APOLLO_SENSOR_CONTROL_CMD:
                 {
-                    uint8_t payload[2];
+                    uint8_t payload[2] = { 0x00 };
+
                     PR_INFO("%s, APOLLO_SENSOR_CONTROL_CMD, 0x%02x, 0x%02x", __func__, msg_link_quene.front->data[0], msg_link_quene.front->data[1]);
 
                     switch (msg_link_quene.front->data[0])
