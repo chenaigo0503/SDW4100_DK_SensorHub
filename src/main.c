@@ -177,7 +177,7 @@ void get_irg_hr_send_msg(void)
     if (hr_stat == MSG_HR_READY)
     {
         hr_stat = 0;
-        *(float*)(&hr_data[0]) = hr;
+        *(int32_t*)(&hr_data[0]) = hr;
         *(int32_t*)(&hr_data[4]) = hr_trust_level;
         *(int16_t*)(&hr_data[8]) = grade;
         send_event_msg(APOLLO_SENSOR_5_EVNT, (uint8_t*)hr_data);
