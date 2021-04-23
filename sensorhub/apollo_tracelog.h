@@ -12,7 +12,7 @@
 #include "am_util_stdio.h"
 #include "apollo3_rtc.h"
 
-#define APOLLO_LOG_LEVEL 3
+#define APOLLO_LOG_LEVEL 0
 
 #define APOLLO_LOG_ERROR 0
 #define APOLLO_LOG_DEBUG 1
@@ -77,8 +77,7 @@
 #if (APOLLO_LOG_INFO < APOLLO_LOG_LEVEL)
 #define pr_info(...) am_util_stdio_printf(__VA_ARGS__)
 #else
-#define PR_info(...)
+#define pr_info(...)
 #endif
-
 
 #endif // APOLLO_TRACELOG_H

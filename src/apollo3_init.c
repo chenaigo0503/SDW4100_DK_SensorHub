@@ -54,7 +54,7 @@ void apollo3_init(void)
     //
     // Configure the board for low power operation.
     //
-    am_bsp_low_power_init();	
+    am_bsp_low_power_init();
 }
 
 // task list API
@@ -67,7 +67,7 @@ void task_list_insert(void (*taskhandle)(void))
 
     if (task_list_num_get() >= APOLLO_TASK_FUNMAX)
         return;
-    
+
     for(i = 0; i < APOLLO_TASK_FUNMAX; i++)
     {
         if (taskList[i] == taskhandle)
@@ -127,12 +127,16 @@ void call_task_list(void)
     uint8_t i;
 
     if (task_list_num_get() == 0)
+    {
         return;
+    }
 
-    for(i = 0; i < APOLLO_TASK_FUNMAX; i++)
+    for (i = 0; i < APOLLO_TASK_FUNMAX; i++)
     {
         if (taskList[i])
+        {
             taskList[i]();
+        }
     }
 }
 

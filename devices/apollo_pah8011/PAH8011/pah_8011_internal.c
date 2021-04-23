@@ -40,19 +40,19 @@ pah_ret pah_8011_verify_product_id(void)
     
     if (data != PAH_PRODUCT_ID)
     {
-        debug_printf("pah_8011_verify_product_id() fail. id = 0x%X \n", data);
+        debug_printf("pah_8011_verify_product_id() fail. id = 0x%X\r\n", data);
         ret = pah_err_verify_device_fail;
         goto FAIL;
     }
 
-    debug_printf("pah_8011_verify_product_id() success. id = 0x%X \n", data);
+    debug_printf("pah_8011_verify_product_id() success. id = 0x%X\r\n", data);
 
     // send PAH ID message
     debug_printf("\r\n###PPG-ID: 0X%02X***\r\n", data);
     return pah_success;
 
 FAIL:
-    debug_printf("pah8011_verify_product_id() failed. ret = %d \n", ret);
+    debug_printf("pah8011_verify_product_id() failed. ret = %d\r\n", ret);
     return ret;
 }
 

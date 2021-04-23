@@ -52,7 +52,7 @@
           <OutputName>apollo3b_hub</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
-          <CreateHexFile>0</CreateHexFile>
+          <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
           <ListingPath>.\Listings\</ListingPath>
@@ -184,8 +184,6 @@
             <hadXRAM>0</hadXRAM>
             <uocXRam>0</uocXRam>
             <RvdsVP>2</RvdsVP>
-            <RvdsMve>0</RvdsMve>
-            <RvdsCdeCp>0</RvdsCdeCp>
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
@@ -313,7 +311,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>0</Optim>
             <oTime>1</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -339,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>AM_PACKAGE_BGA AM_PART_APOLLO3 keil</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader;..\third_party\custom\crc8;..\devices\apollo_pah8011;..\devices\apollo_pah8011\PAH_MAIN;..\devices\apollo_pah8011\PAH8011;..\devices\apollo_pah8011\PAH8011\pah_comm_others;..\devices\apollo_pah8011\PAH8011\verify;..\devices\apollo_pah8011\PxiAlg\HR\v5551</IncludePath>
+              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader;..\third_party\custom\crc8;..\devices\apollo_pah8011;..\devices\apollo_pah8011\PAH_MAIN;..\devices\apollo_pah8011\PAH8011;..\devices\apollo_pah8011\PAH8011\pah_comm_others;..\devices\apollo_pah8011\PAH8011\verify;..\devices\apollo_pah8011\PxiAlg\HR\v5551;..\third_party\nanopb</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -352,7 +350,7 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <ClangAsOpt>4</ClangAsOpt>
+            <uClangAs>0</uClangAs>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
@@ -414,11 +412,6 @@
           <GroupName>src</GroupName>
           <Files>
             <File>
-              <FileName>main.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\main.c</FilePath>
-            </File>
-            <File>
               <FileName>apollo3_init.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\apollo3_init.c</FilePath>
@@ -427,6 +420,11 @@
               <FileName>apollo3_uart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\apollo3_uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\main.c</FilePath>
             </File>
             <File>
               <FileName>apollo3_amotas.c</FileName>
@@ -626,7 +624,7 @@
           <Files>
             <File>
               <FileName>startup_keil.s</FileName>
-              <FileType>1</FileType>
+              <FileType>2</FileType>
               <FilePath>../keil/startup_keil.s</FilePath>
             </File>
           </Files>
@@ -641,6 +639,31 @@
             </File>
           </Files>
         </Group>
+        <Group>
+          <GroupName>nanopb</GroupName>
+          <Files>
+            <File>
+              <FileName>pb_common.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\third_party\nanopb\pb_common.c</FilePath>
+            </File>
+            <File>
+              <FileName>pb_decode.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\third_party\nanopb\pb_decode.c</FilePath>
+            </File>
+            <File>
+              <FileName>pb_encode.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\third_party\nanopb\pb_encode.c</FilePath>
+            </File>
+            <File>
+              <FileName>UserInformation.pb.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\third_party\nanopb\UserInformation.pb.c</FilePath>
+            </File>
+          </Files>
+        </Group>
       </Groups>
     </Target>
   </Targets>
@@ -650,20 +673,5 @@
     <components/>
     <files/>
   </RTE>
-
-  <LayerInfo>
-    <Layers>
-      <Layer>
-        <LayName>&lt;Project Info&gt;</LayName>
-        <LayDesc></LayDesc>
-        <LayUrl></LayUrl>
-        <LayKeys></LayKeys>
-        <LayCat></LayCat>
-        <LayLic></LayLic>
-        <LayTarg>0</LayTarg>
-        <LayPrjMark>1</LayPrjMark>
-      </Layer>
-    </Layers>
-  </LayerInfo>
 
 </Project>

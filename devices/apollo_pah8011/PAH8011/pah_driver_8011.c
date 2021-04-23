@@ -174,7 +174,7 @@ bool pah_init_with_flags(const pah_flags_s *flags)
 {
     pah_ret ret = pah_err_unknown;
 
-    debug_printf(">>>> pah_init()\n");
+    debug_printf(">>>> pah_init()\r\n");
 
     if (!flags)
     {
@@ -252,7 +252,7 @@ bool pah_init_with_flags(const pah_flags_s *flags)
 
     g_init = true;
 
-    debug_printf("<<<< pah_init() \n");
+    debug_printf("<<<< pah_init()\r\n");
     return true;
 
 FAIL:
@@ -881,13 +881,13 @@ static bool _pah8011_update_flag(void)
     return true;
 
 FAIL:
-    debug_printf("_pah8011_update_flag fail \n");
+    debug_printf("_pah8011_update_flag fail\r\n");
     return false;
 }
 
 static bool _pah8011_shutdown(void)
 {
-    debug_printf("_pah8011_shutdown() \n");
+    debug_printf("_pah8011_shutdown()\r\n");
 
     if (!pah_comm_write(0x7F, 0x04))    //bank4
         goto FAIL;
@@ -913,13 +913,13 @@ static bool _pah8011_shutdown(void)
     return true;
 
 FAIL:
-    debug_printf("_pah8011_shutdown error \n");
+    debug_printf("_pah8011_shutdown error\r\n");
     return false;
 }
 
 static bool _pah8011_startup(void)
 {
-    debug_printf("_pah8011_startup() \n");
+    debug_printf("_pah8011_startup()\r\n");
 
     if (!pah_comm_write(0x7F, 0x04))    //bank4
         goto FAIL;
@@ -933,7 +933,7 @@ static bool _pah8011_startup(void)
     return true;
 
 FAIL:
-    debug_printf("_pah8011_startup error \n");
+    debug_printf("_pah8011_startup error\r\n");
     return false;
 }
 
@@ -944,7 +944,7 @@ static bool _pah8011_start_tg(void)
     if (g_state.has_started_tg)
         return true;
 
-    debug_printf("_pah8011_start_tg() \n");
+    debug_printf("_pah8011_start_tg()\r\n");
 
     // must sleep between update flag and TG enable.
     delay_ms(1);
@@ -986,7 +986,7 @@ static bool _pah8011_start_tg(void)
     return true;
 
 FAIL:
-    debug_printf("_pah8011_start_tg error \n");
+    debug_printf("_pah8011_start_tg error\r\n");
     return false;
 }
 
@@ -998,7 +998,7 @@ static bool _pah8011_start_ppg(void)
     if (g_state.has_started_ppg)
         return true;
 
-    debug_printf("_pah8011_start_ppg() \n");
+    debug_printf("_pah8011_start_ppg()\r\n");
 
     pah8011_get_ppg_ch_enabled(ppg_ch_enabled);
 
@@ -1039,7 +1039,7 @@ static bool _pah8011_start_ppg(void)
     return true;
 
 FAIL:
-    debug_printf("_pah8011_start_ppg error \n");
+    debug_printf("_pah8011_start_ppg error\r\n");
     return false;
 }
 
@@ -1050,7 +1050,7 @@ static bool _pah8011_stop_ppg(void)
     if (!g_state.has_started_ppg)
         return true;
 
-    debug_printf("_pah8011_stop_ppg() \n");
+    debug_printf("_pah8011_stop_ppg()\r\n");
 
     if (!pah_comm_write(0x7F, 0x01))    //bank1
         goto FAIL;
@@ -1080,7 +1080,7 @@ static bool _pah8011_stop_ppg(void)
     return true;
 
 FAIL:
-    debug_printf("_pah8011_stop_ppg error \n");
+    debug_printf("_pah8011_stop_ppg error\r\n");
     return false;
 }
 
@@ -1091,7 +1091,7 @@ static bool _pah8011_start_touch(void)
     if (g_state.has_started_touch)
         return true;
 
-    debug_printf("_pah8011_start_touch() \n");
+    debug_printf("_pah8011_start_touch()\r\n");
 
     if (!pah_comm_write(0x7F, 0x01))    //bank1
         goto FAIL;
@@ -1130,7 +1130,7 @@ static bool _pah8011_start_touch(void)
     return true;
 
 FAIL:
-    debug_printf("_pah8011_start_touch error \n");
+    debug_printf("_pah8011_start_touch error\r\n");
     return false;
 }
 static bool _pah8011_stop_touch(void)
@@ -1140,7 +1140,7 @@ static bool _pah8011_stop_touch(void)
     if (!g_state.has_started_touch)
         return true;
 
-    debug_printf("_pah8011_stop_touch() \n");
+    debug_printf("_pah8011_stop_touch()\r\n");
 
     if (!pah_comm_write(0x7F, 0x01))    //bank1
         goto FAIL;
@@ -1171,7 +1171,7 @@ static bool _pah8011_stop_touch(void)
     return true;
 
 FAIL:
-    debug_printf("_pah8011_stop_touch error \n");
+    debug_printf("_pah8011_stop_touch error\r\n");
     return false;
 }
 
@@ -1179,7 +1179,7 @@ static bool _pah8011_clear_fifo_and_int_req(void)
 {
     uint8_t int_req = 0;
 
-    debug_printf("_pah8011_clear_fifo_and_int_req() \n");
+    debug_printf("_pah8011_clear_fifo_and_int_req()\r\n");
 
     if (!pah_comm_write(0x7F, 0x01))    //bank1
         goto FAIL;
@@ -1209,7 +1209,7 @@ static bool _pah8011_clear_fifo_and_int_req(void)
     return true;
 
 FAIL:
-    debug_printf("_pah8011_clear_fifo_and_int_req() error \n");
+    debug_printf("_pah8011_clear_fifo_and_int_req() error\r\n");
     return false;
 }
 
@@ -1217,7 +1217,7 @@ static bool _pah8011_update_report_num(void)
 {
     if (g_state.prop_curr.report_sample_num_per_ch != g_state.prop_next.report_sample_num_per_ch)
     {
-        debug_printf("_pah8011_update_report_num(). report_sample_num_per_ch %d -> %d \n", g_state.prop_curr.report_sample_num_per_ch, g_state.prop_next.report_sample_num_per_ch);
+        debug_printf("_pah8011_update_report_num(). report_sample_num_per_ch %d -> %d\r\n", g_state.prop_curr.report_sample_num_per_ch, g_state.prop_next.report_sample_num_per_ch);
 
         if (!_pah8011_set_report_num(g_state.prop_next.report_sample_num_per_ch , pah_get_fifo_ch_num()))
             goto FAIL;

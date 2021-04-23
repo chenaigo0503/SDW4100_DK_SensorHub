@@ -1277,7 +1277,7 @@ void lsm6dso_data_ready_mode_set(stmdev_ctx_t *ctx,
   */
 static void lsm6dso_steps_reset(stmdev_ctx_t *ctx)
 {
-  lsm6dso_emb_func_src_t reg;
+    lsm6dso_emb_func_src_t reg;
 
     lsm6dso_mem_bank_set(ctx, LSM6DSO_EMBEDDED_FUNC_BANK);
     ctx->read_reg(ctx->handle, LSM6DSO_EMB_FUNC_SRC, (uint8_t*)&reg, 1);

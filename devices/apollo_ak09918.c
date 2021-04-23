@@ -105,7 +105,6 @@ void ak099xx_set_mode(const uint8_t mode)
 void ak099xx_soft_reset(void)
 {
     uint8_t i2cData;
-    int16_t fret;
 
     /* Soft Reset */
     i2cData = AK099XX_SOFT_RESET;
@@ -212,7 +211,6 @@ uint8_t ak099xx_check_rdy(void)
 void ak099xx_get_data(int16_t data[3], int16_t st[2])
 {
     uint8_t i2cData[AK099XX_BDATA_SIZE];
-    int16_t tmp;
     uint8_t i;
 
     /* Read data */
