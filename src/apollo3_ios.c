@@ -236,5 +236,6 @@ void am_ioslave_ios_isr(void)
         // the IO slave interface.
         ret = unpack_data((uint8_t*)am_hal_ios_pui8LRAM);
         PR_DBG("upack data: ret = %d", ret);
+        ret = ret;
     }
 }

@@ -31,10 +31,6 @@
 #define APOLLO_FW_DATAEND_RESP      0x09
 #define APOLLO_SET_DATE_TIME_CMD    0x0A    /* 0x0A: set Date and Time information to Sensor Hub request command */
 #define APOLLO_SET_DATE_TIME_RESP   0x0B    /* 0x0B: set Date and TIme information to Sensor Hub response command */
-#define APOLLO_SET_DATE_CMD         0x10
-#define APOLLO_SET_DATE_RESP        0x11
-#define APOLLO_SET_TIME_CMD         0x12
-#define APOLLO_SET_TIME_RESP        0x13
 #define APOLLO_ACC_CALI_CMD         0x14
 #define APOLLO_ACC_CALI_RESP        0x15
 #define APOLLO_SET_ACC_CALI_CMD     0x16
@@ -82,6 +78,9 @@ typedef enum APOLLO_HUB_RESP_RESULT {
     APOLLO_HUB_RESP_ERROR_CRC,              /* 0x03: response wrong CRC validation */
     APOLLO_HUB_RESP_ERROR_FS_PID,           /* 0x04: response wrong FS or PID */
     APOLLO_HUB_RESP_ERROR_PB_DECODE,        /* 0x05: response wrong nanopb decode */
+    APOLLO_HUB_RESP_ERROR_DATE_INFO,        /* 0x06: response wrong date information */
+    APOLLO_HUB_RESP_ERROR_TIME_INFO,        /* 0x07: response wrong time information */
+    APOLLO_HUB_RESP_ERROR_MALLOC,           /* 0x08: response wrong malloc */
 } APOLLO_HUB_RESP_RESULT_t;
 
 typedef struct apollo_msg{
@@ -96,31 +95,12 @@ typedef struct msg_link{
     apollo_msg* rear;
 }msg_link;
 
-static uint8_t apollo_message_len[256] = {
-//  x0  x1  x2 x3 x4 x5 x6 x7 x8 x9 xA xB xC xD xE xF
-    0,  0,  0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //0x
-    4,  0,  3, 0, 0, 3, 3, 0, 0x12, 2, 0, 0, 0, 0, 0, 0, //1x
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //2x
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //3x
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //4x
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //5x
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //6x
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //7x
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //8x
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //9x
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Ax
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Bx
-    12, 12, 4, 4, 6, 10, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, //Cx
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Dx
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Ex
-    0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, //Fx
-};
-
 // function
 int unpack_data(uint8_t* message_pack);
 uint8_t send_resp_msg(uint8_t msg_id, uint8_t* msg_data);
-uint8_t send_resp_msg_to_host(uint8_t msg_id, uint32_t length, uint8_t* msg_data);
+uint8_t send_resp_msg_to_host(uint8_t msg_id, uint16_t length, uint8_t* msg_data);
 uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data);
+uint8_t send_event_msg_to_host(uint8_t msg_id, uint16_t msg_length, uint8_t* msg_data);
 int sensor_event_enquene(uint8_t mid, uint8_t* sns_data, uint16_t sns_len);
 void msg_dequene(void);
 
