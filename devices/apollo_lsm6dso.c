@@ -82,9 +82,8 @@ static void lsm6d_read(void *handle, uint8_t reg, uint8_t *bufp,
     if (sw_version[0] == 0)
         am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_CLEAR);
     else
-    Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
+        Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
 
-    //PR_ERR("R: %d", am_hal_iom_blocking_transfer(handle, &Transaction));
     am_hal_iom_blocking_transfer(handle, &Transaction);
     memcpy(bufp, lsmBuffer, len);
     if (sw_version[0] == 0)
@@ -124,7 +123,6 @@ static void lsm6d_write(void *handle, uint8_t reg, uint8_t *bufp,
     else
         Transaction.uPeerInfo.ui32SpiChipSelect = AM_BSP_IOM0_CS_CHNL;
 
-    //PR_ERR("W: %d", am_hal_iom_blocking_transfer(handle, &Transaction));
     am_hal_iom_blocking_transfer(handle, &Transaction);
     if (sw_version[0] == 0)
         am_hal_gpio_state_write(LSM6DSO_PIN_CE, AM_HAL_GPIO_OUTPUT_SET);
@@ -190,11 +188,6 @@ float_t lsm6dso_from_lsb_to_nsec(int16_t lsb)
 {
   return ((float_t)lsb * 25000.0f);
 }
-
-/**
-  * @}
-  *
-*/
 
 /**
   * @brief  Device "Who am I".[get]
@@ -993,7 +986,7 @@ void lsm6dso_pin_int2_route_set(stmdev_ctx_t *ctx, stmdev_ctx_t *aux_ctx,
         ctx->write_reg(ctx->handle, LSM6DSO_EMB_FUNC_INT2, (uint8_t*)&emb_func_int2, 1);
         ctx->write_reg(ctx->handle, LSM6DSO_FSM_INT2_A, (uint8_t*)&fsm_int2_a, 1);
         ctx->write_reg(ctx->handle, LSM6DSO_FSM_INT2_B, (uint8_t*)&fsm_int2_b, 1);
-      
+
         lsm6dso_mem_bank_set(ctx, LSM6DSO_USER_BANK);
 
         if (( emb_func_int2.int2_fsm_lc
@@ -1025,7 +1018,7 @@ void lsm6dso_pin_int2_route_set(stmdev_ctx_t *ctx, stmdev_ctx_t *aux_ctx,
         }
         ctx->write_reg(ctx->handle, LSM6DSO_INT2_CTRL, (uint8_t*)&int2_ctrl, 1);
         ctx->write_reg(ctx->handle, LSM6DSO_MD2_CFG, (uint8_t*)&md2_cfg, 1);
- 
+
         ctx->read_reg(ctx->handle, LSM6DSO_TAP_CFG2, (uint8_t*) &tap_cfg2, 1);
 
         lsm6dso_pin_int1_route_get(ctx, &pin_int1_route);
@@ -1275,7 +1268,7 @@ void lsm6dso_data_ready_mode_set(stmdev_ctx_t *ctx,
   * @param  ctx      read / write interface definitions
   *
   */
-static void lsm6dso_steps_reset(stmdev_ctx_t *ctx)
+void lsm6dso_steps_reset(stmdev_ctx_t *ctx)
 {
     lsm6dso_emb_func_src_t reg;
 
@@ -1594,7 +1587,7 @@ void lsm6dso_init(void)
         .eSpiMode = AM_HAL_IOM_SPI_MODE_0,
     };
 
-    am_hal_gpio_pincfg_t m_lsm6dsoGpioInt1 = 
+    am_hal_gpio_pincfg_t m_lsm6dsoGpioInt1 =
     {
         .uFuncSel = AM_HAL_PIN_14_GPIO,
         .eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
@@ -1602,7 +1595,7 @@ void lsm6dso_init(void)
         .eGPInput = AM_HAL_GPIO_PIN_INPUT_ENABLE,
     };
 
-    am_hal_gpio_pincfg_t m_lsm6dsoGpioInt2 = 
+    am_hal_gpio_pincfg_t m_lsm6dsoGpioInt2 =
     {
         .uFuncSel = AM_HAL_PIN_15_GPIO,
         .eDriveStrength = AM_HAL_GPIO_PIN_DRIVESTRENGTH_2MA,
@@ -1650,7 +1643,10 @@ void lsm6dso_init(void)
     /* Check device ID */
     lsm6dso_device_id_get(&g_Lsm6dsoCtx, &whoAmI);
     if(LSM6DSO_WHO_AM_I != (uint8_t)whoAmI)
+    {
         PR_ERR("ERROR: lsm6dso get ID: 0x%02x error.", whoAmI);
+        return;
+    }
     else
         PR_INFO("lsm6dso get ID success.");
 
@@ -1680,7 +1676,7 @@ void lsm6dso_init(void)
     lsm6dso_gy_full_scale_set(&g_Lsm6dsoCtx, LSM6DSO_2000dps);
 
     /* Reset steps of pedometer */
-    //lsm6dso_steps_reset(&g_Lsm6dsoCtx);
+    lsm6dso_steps_reset(&g_Lsm6dsoCtx);
 
     /* Enable pedometer */
     lsm6dso_pedo_sens_set(&g_Lsm6dsoCtx, LSM6DSO_FALSE_STEP_REJ_ADV_MODE);
@@ -1705,7 +1701,7 @@ void lsm6dso_init(void)
 void lsm6dso_mem_bank_set(stmdev_ctx_t *ctx, lsm6dso_reg_access_t val)
 {
     lsm6dso_func_cfg_access_t reg;
-    
+
     ctx->read_reg(ctx->handle, LSM6DSO_FUNC_CFG_ACCESS, (uint8_t*)&reg, 1);
     reg.reg_access = (uint8_t)val;
     ctx->write_reg(ctx->handle, LSM6DSO_FUNC_CFG_ACCESS, (uint8_t*)&reg, 1);
@@ -1764,18 +1760,18 @@ void lsm6dso_int1_route_set(lsm6dso_int1_type_t int1_type, bool int1_val)
 {
     lsm6dso_pin_int1_route_t m_int1_route;
     uint8_t* p_data;
-    
+
     if (int1_val)
     {
         /* Enable drdy 75 us pulse: if interrupt must be pulsed */
         lsm6dso_data_ready_mode_set(&g_Lsm6dsoCtx, LSM6DSO_DRDY_PULSED);
     }
-    
+
     if (int1_type == LSM6DSO_int1_all)
     {
         memset(&m_int1_route, int1_val, sizeof(m_int1_route));
         lsm6dso_pin_int1_route_set(&g_Lsm6dsoCtx, m_int1_route);
-        
+
         return;
     }
 
@@ -1804,7 +1800,7 @@ void lsm6dso_int2_route_set(lsm6dso_int2_type_t int2_type, bool int2_val)
     {
         memset(&m_int2_route, int2_val, sizeof(m_int2_route));
         lsm6dso_pin_int2_route_set(&g_Lsm6dsoCtx, NULL, m_int2_route);
-        
+
         return;
     }
 
@@ -1837,8 +1833,6 @@ uint8_t lsm6dso_acceleration_get(float* acc_data)
         acc_data[1] = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[1]);
         acc_data[2] = lsm6dso_from_fs2_to_mg(data_raw_acceleration.i16bit[2]);
 
-        //pr_err("x1=%4.2f,x2=%4.2f,x3=%4.2f\r\n",acc_data[0], acc_data[1], acc_data[2]);
-
         return 0;
     }
     else
@@ -1865,8 +1859,6 @@ uint8_t lsm6dso_angular_get(float* gyro_data)
         gyro_data[1] = lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[1]);
         gyro_data[2] = lsm6dso_from_fs2000_to_mdps(data_raw_angular_rate.i16bit[2]);
 
-        //pr_err("x4=%4.2f,x5=%4.2f,x6=%4.2f\r\n", gyro_data[0], gyro_data[1], gyro_data[2]);
-        
         return 0;
     }
     else
@@ -1930,7 +1922,7 @@ uint8_t lsm6dso_acc_cali(void)
     lsm6dso_xl_usr_offset_z_set(&g_Lsm6dsoCtx, (uint8_t*)&acc_offset[2]);
     PR_INFO("ACC offset: %d, %d, %d", acc_offset[0], acc_offset[1], acc_offset[2]);
     lsm6dso_xl_usr_offset_set(&g_Lsm6dsoCtx, PROPERTY_ENABLE);
-    
+
     return 0;
 }
 

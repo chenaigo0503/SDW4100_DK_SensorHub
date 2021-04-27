@@ -494,6 +494,7 @@ void amotas_init(void)
     amotaStart = 1;
 }
 
+#if (APOLLO_LOG_INFO < APOLLO_LOG_LEVEL)
 static char *otaStatusMessage[] =
     {
         "Success",
@@ -501,6 +502,8 @@ static char *otaStatusMessage[] =
         "Failure",
         "Pending"
     };
+#endif 
+
 void dump_ota_status(void)
 {
     uint32_t *pOtaDesc = (uint32_t *)(OTA_POINTER_LOCATION & ~(AM_HAL_FLASH_PAGE_SIZE - 1));
