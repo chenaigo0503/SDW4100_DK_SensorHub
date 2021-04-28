@@ -38,8 +38,7 @@ volatile uint32_t ui32LastError;
 // Catch HAL errors.
 //
 //*****************************************************************************
-void
-error_handler(uint32_t ui32ErrorStatus)
+void error_handler(uint32_t ui32ErrorStatus)
 {
     ui32LastError = ui32ErrorStatus;
 
@@ -73,8 +72,7 @@ void uart_send_data(uint8_t* pcData, uint32_t dataLen)
 // UART0 interrupt handler.
 //
 //*****************************************************************************
-void
-am_uart_isr(void)
+void am_uart_isr(void)
 {
     //
     // Service the FIFOs as necessary, and clear the interrupts.
@@ -83,7 +81,7 @@ am_uart_isr(void)
     am_hal_uart_interrupt_status_get(phUART, &ui32Status, true);
     am_hal_uart_interrupt_clear(phUART, ui32Status);
     am_hal_uart_interrupt_service(phUART, ui32Status, &ui32Idle);
-    
+
     if (ui32Status & (AM_HAL_UART_INT_RX_TMOUT | AM_HAL_UART_INT_RX))
     {
         uint32_t ui32BytesRead;
@@ -154,34 +152,32 @@ void uart_print(char *pcStr)
 // apollo3_uart_init
 //
 //*****************************************************************************
-int
-apollo3_uart_init(void)
+int apollo3_uart_init(void)
 {
-	am_hal_uart_config_t sUartConfig =
-	{
-		//
-		// Standard UART settings: 115200-8-N-1
-		//
-		.ui32BaudRate = 115200,
-		.ui32DataBits = AM_HAL_UART_DATA_BITS_8,
-		.ui32Parity = AM_HAL_UART_PARITY_NONE,
-		.ui32StopBits = AM_HAL_UART_ONE_STOP_BIT,
-		.ui32FlowControl = AM_HAL_UART_FLOW_CTRL_NONE,
+    am_hal_uart_config_t sUartConfig =
+    {
+        //
+        // Standard UART settings: 115200-8-N-1
+        //
+        .ui32BaudRate = 115200,
+        .ui32DataBits = AM_HAL_UART_DATA_BITS_8,
+        .ui32Parity = AM_HAL_UART_PARITY_NONE,
+        .ui32StopBits = AM_HAL_UART_ONE_STOP_BIT,
+        .ui32FlowControl = AM_HAL_UART_FLOW_CTRL_NONE,
 
-		//
-		// Set TX and RX FIFOs to interrupt at half-full.
-		//
-		.ui32FifoLevels = (AM_HAL_UART_TX_FIFO_1_2 |
-						   AM_HAL_UART_RX_FIFO_1_2),
+        //
+        // Set TX and RX FIFOs to interrupt at half-full.
+        //
+        .ui32FifoLevels = (AM_HAL_UART_TX_FIFO_1_2 | AM_HAL_UART_RX_FIFO_1_2),
 
-		//
-		// Buffers
-		//
-		.pui8TxBuffer = g_pui8TxBuffer,
-		.ui32TxBufferSize = sizeof(g_pui8TxBuffer),
-		.pui8RxBuffer = g_pui8RxBuffer,
-		.ui32RxBufferSize = sizeof(g_pui8RxBuffer),
-	};
+        //
+        // Buffers
+        //
+        .pui8TxBuffer = g_pui8TxBuffer,
+        .ui32TxBufferSize = sizeof(g_pui8TxBuffer),
+        .pui8RxBuffer = g_pui8RxBuffer,
+        .ui32RxBufferSize = sizeof(g_pui8RxBuffer),
+    };
 
     //
     // Initialize the printf interface for UART output.
@@ -195,11 +191,11 @@ apollo3_uart_init(void)
     //
     am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_TX, g_AM_BSP_GPIO_COM_UART_TX);
     am_hal_gpio_pinconfig(AM_BSP_GPIO_COM_UART_RX, g_AM_BSP_GPIO_COM_UART_RX);
-    
+
     // open NVIC for UART0
     am_hal_uart_interrupt_clear(phUART, AM_HAL_UART_INT_RX | AM_HAL_UART_INT_RX_TMOUT);
     am_hal_uart_interrupt_enable(phUART, AM_HAL_UART_INT_RX | AM_HAL_UART_INT_RX_TMOUT);
     NVIC_EnableIRQ((IRQn_Type)(UART0_IRQn + AM_BSP_UART_PRINT_INST));
-    
+
     return 0;
 }

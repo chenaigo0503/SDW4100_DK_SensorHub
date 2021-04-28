@@ -9,10 +9,17 @@
 //! @{
 //
 //*****************************************************************************
-#include <stdint.h>
-
 #ifndef APOLLO_MESSAGE_H
 #define APOLLO_MESSAGE_H
+
+#include <stdint.h>
+#include "crc8.h"
+#include "am_mcu_apollo.h"
+#include "am_util.h"
+#include "apollo3_init.h"
+#include "apollo_tracelog.h"
+#include <stddef.h>
+#include <string.h>
 
 #define APOLLO_MSG_MAX              1024
 
@@ -111,10 +118,8 @@ typedef struct msg_link{
 
 // function
 int unpack_data(uint8_t* message_pack);
-uint8_t send_resp_msg(uint8_t msg_id, uint8_t* msg_data);
-uint8_t send_resp_msg_to_host(uint8_t msg_id, uint16_t length, uint8_t* msg_data);
-uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data);
-uint8_t send_event_msg_to_host(uint8_t msg_id, uint16_t msg_length, uint8_t* msg_data);
+uint8_t send_resp_msg_to_host(uint8_t msg_id, uint8_t length, uint8_t* msg_data);
+uint8_t send_event_msg_to_host(uint8_t msg_id, uint8_t msg_length, uint8_t* msg_data);
 int sensor_event_enquene(uint8_t mid, uint8_t* sns_data, uint16_t sns_len);
 void msg_dequene(void);
 

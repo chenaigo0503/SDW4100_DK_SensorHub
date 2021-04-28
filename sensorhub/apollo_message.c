@@ -9,15 +9,7 @@
 //
 //*****************************************************************************
 
-#include <stdint.h>
-#include <stddef.h>
-#include <string.h>
 #include "apollo_message.h"
-#include "crc8.h"
-#include "am_mcu_apollo.h"
-#include "am_util.h"
-#include "apollo3_init.h"
-#include "apollo_tracelog.h"
 
 extern void *g_pIOSHandle;
 static uint8_t msg_buf[APOLLO_MSG_MAX];
@@ -120,7 +112,7 @@ int sensor_event_enquene(uint8_t mid, uint8_t* sns_data, uint16_t sns_len)
     return 0;
 }
 
-uint8_t send_resp_msg_to_host(uint8_t msg_id, uint16_t msg_length, uint8_t* msg_data)
+uint8_t send_resp_msg_to_host(uint8_t msg_id, uint8_t msg_length, uint8_t* msg_data)
 {
     uint8_t send_msg[128] = { 0x00 };
     uint32_t num_write;
@@ -177,9 +169,9 @@ uint8_t send_resp_msg_to_host(uint8_t msg_id, uint16_t msg_length, uint8_t* msg_
     return 0;
 }
 
-uint8_t send_event_msg_to_host(uint8_t msg_id, uint16_t msg_length, uint8_t* msg_data)
+uint8_t send_event_msg_to_host(uint8_t msg_id, uint8_t msg_length, uint8_t* msg_data)
 {
-    uint8_t send_msg[32] = { 0x00 };
+    uint8_t send_msg[64] = { 0x00 };
     uint32_t num_write;
     uint32_t iosUsedSpace;
 
