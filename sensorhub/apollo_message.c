@@ -9,15 +9,7 @@
 //
 //*****************************************************************************
 
-#include <stdint.h>
-#include <stddef.h>
-#include <string.h>
 #include "apollo_message.h"
-#include "crc8.h"
-#include "am_mcu_apollo.h"
-#include "am_util.h"
-#include "apollo3_init.h"
-#include "apollo_tracelog.h"
 
 extern void *g_pIOSHandle;
 static uint8_t msg_buf[APOLLO_MSG_MAX];
@@ -81,16 +73,7 @@ int unpack_data(uint8_t* message_pack)
     ap_msg->mid = message_pack[2];
     ap_msg->len = message_pack[3];
 
-    // mid = APOLLO_FW_UPDATA_DATA, unfixed length.
-//    if ((ap_msg->mid != APOLLO_FW_UPDATA_DATA) && (ap_msg->len != apollo_message_len[ap_msg->mid]))
-//    {
-//        // Does not match the transmission packet length
-//        ret = APOLLO_HUB_RESP_ERROR_LENGTH;
-//        send_resp_msg_to_host(ap_msg->mid, 1, &ret);
-//        return -2;
-//    }
-
-    if(message_pack[ap_msg->len + 4] != CalcCrc8(message_pack, ap_msg->len + 4))
+    if (message_pack[ap_msg->len + 4] != CalcCrc8(message_pack, ap_msg->len + 4))
     {
         // CRC 8 check failed
         ret = APOLLO_HUB_RESP_ERROR_CRC;
@@ -101,6 +84,8 @@ int unpack_data(uint8_t* message_pack)
     ap_msg->data = msg_malloc(ap_msg->len);
     if (ap_msg->data == NULL)
     {
+        ret = APOLLO_HUB_RESP_ERROR_MALLOC;
+        send_resp_msg_to_host(ap_msg->mid, 1, &ret);
         return -1;
     }
 
@@ -127,44 +112,7 @@ int sensor_event_enquene(uint8_t mid, uint8_t* sns_data, uint16_t sns_len)
     return 0;
 }
 
-uint8_t send_resp_msg(uint8_t msg_id, uint8_t* msg_data)
-{
-    uint8_t send_msg[8];
-    uint32_t num_write;
-    uint32_t iosUsedSpace;
-
-    send_msg[0] = 0xAA;
-    send_msg[1] = APOLLO_HUB_PID;
-    send_msg[2] = msg_id + 1;   // response message id
-    send_msg[3] = apollo_message_len[send_msg[2]];
-
-    if (send_msg[3] !=0)
-    {
-        if (msg_data == NULL)
-            return 2;
-        memcpy(&send_msg[4], msg_data, send_msg[3]);
-    }
-    send_msg[send_msg[3] + 4] = CalcCrc8(send_msg, send_msg[3] + 4);
-
-    am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
-    while (iosUsedSpace)
-    {
-        am_util_delay_ms(5);
-        am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
-        if (iosUsedSpace)
-            inform_host();
-    }
-    am_hal_ios_fifo_write(g_pIOSHandle, send_msg, send_msg[3] + 5, &num_write);
-    if(sizeof(send_msg) < num_write)
-        return 3;
-
-    am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
-    wait_fifo_empty();
-
-    return 0;
-}
-
-uint8_t send_resp_msg_to_host(uint8_t msg_id, uint32_t length, uint8_t* msg_data)
+uint8_t send_resp_msg_to_host(uint8_t msg_id, uint8_t msg_length, uint8_t* msg_data)
 {
     uint8_t send_msg[128] = { 0x00 };
     uint32_t num_write;
@@ -187,7 +135,7 @@ uint8_t send_resp_msg_to_host(uint8_t msg_id, uint32_t length, uint8_t* msg_data
         return 1;
     }
 
-    send_msg[3] = length;
+    send_msg[3] = msg_length;
 
     if (send_msg[3] != 0)
     {
@@ -221,9 +169,9 @@ uint8_t send_resp_msg_to_host(uint8_t msg_id, uint32_t length, uint8_t* msg_data
     return 0;
 }
 
-uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data)
+uint8_t send_event_msg_to_host(uint8_t msg_id, uint8_t msg_length, uint8_t* msg_data)
 {
-    uint8_t send_msg[17];
+    uint8_t send_msg[64] = { 0x00 };
     uint32_t num_write;
     uint32_t iosUsedSpace;
 
@@ -235,10 +183,19 @@ uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data)
     send_msg[0] = APOLLO_MESSAGE_HEAD;
     send_msg[1] = APOLLO_HUB_PID;
     send_msg[2] = msg_id;
-    send_msg[3] = apollo_message_len[msg_id];
+    send_msg[3] = msg_length;
 
-    memcpy(&send_msg[4], msg_data, apollo_message_len[msg_id]);
-    send_msg[apollo_message_len[msg_id] + 4] = CalcCrc8(send_msg, apollo_message_len[msg_id] + 4);
+    if (send_msg[3] != 0)
+    {
+        if (msg_data == NULL)
+        {
+            return 2;
+        }
+
+        memcpy(&send_msg[4], msg_data, send_msg[3]);
+    }
+
+    send_msg[send_msg[3] + 4] = CalcCrc8(send_msg, send_msg[3] + 4);
 
     am_hal_ios_fifo_space_used(g_pIOSHandle, &iosUsedSpace);
     while (iosUsedSpace)
@@ -249,11 +206,11 @@ uint8_t send_event_msg(uint8_t msg_id, uint8_t* msg_data)
             inform_host();
     }
 
-    am_hal_ios_fifo_write(g_pIOSHandle, send_msg, apollo_message_len[msg_id] + 5, &num_write);
+    am_hal_ios_fifo_write(g_pIOSHandle, send_msg, send_msg[3] + 5, &num_write);
     if(sizeof(send_msg) < num_write)
-        return 2;
-
-    // am_hal_ios_control(g_pIOSHandle, AM_HAL_IOS_REQ_FIFO_UPDATE_CTR, NULL);
+    {
+        return 3;
+    }
 
     return 0;
 }

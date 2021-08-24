@@ -337,7 +337,7 @@
               <MiscControls></MiscControls>
               <Define>AM_PACKAGE_BGA AM_PART_APOLLO3 keil</Define>
               <Undefine></Undefine>
-              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader;..\third_party\custom\crc8;..\devices\apollo_pah8011;..\devices\apollo_pah8011\PAH_MAIN;..\devices\apollo_pah8011\PAH8011;..\devices\apollo_pah8011\PAH8011\pah_comm_others;..\devices\apollo_pah8011\PAH8011\verify;..\devices\apollo_pah8011\PxiAlg\HR\v5551;..\third_party\nanopb</IncludePath>
+              <IncludePath>..\src;..\utils;..\CMSIS\AmbiqMicro\Include;..\CMSIS\ARM\Include;..\mcu\apollo3;..\..\apollo3b_hub;..\bsp;..\devices;..\sensorhub;..\third_party\exactle\wsf\sources\util;..\bootloader;..\third_party\custom\crc8;..\devices\apollo_pah8011;..\devices\apollo_pah8011\PAH_MAIN;..\devices\apollo_pah8011\PAH8011;..\devices\apollo_pah8011\PAH8011\pah_comm_others;..\devices\apollo_pah8011\PAH8011\verify;..\devices\apollo_pah8011\PxiAlg\HR\v5551;..\third_party\nanopb;..\hal</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -409,7 +409,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>src</GroupName>
+          <GroupName>APP</GroupName>
           <Files>
             <File>
               <FileName>apollo3_init.c</FileName>
@@ -492,6 +492,11 @@
                 </FileArmAds>
               </FileOption>
             </File>
+            <File>
+              <FileName>apollo3_factory.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\apollo3_factory.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -510,7 +515,7 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>devices</GroupName>
+          <GroupName>drivers</GroupName>
           <Files>
             <File>
               <FileName>apollo_lsm6dso.c</FileName>
@@ -661,6 +666,31 @@
               <FileName>UserInformation.pb.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\third_party\nanopb\UserInformation.pb.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>HAL</GroupName>
+          <Files>
+            <File>
+              <FileName>lsm6dso_hal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\hal\lsm6dso_hal.c</FilePath>
+            </File>
+            <File>
+              <FileName>bmp280_hal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\hal\bmp280_hal.c</FilePath>
+            </File>
+            <File>
+              <FileName>ak09918_hal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\hal\ak09918_hal.c</FilePath>
+            </File>
+            <File>
+              <FileName>pah8011_hal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\hal\pah8011_hal.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -33,13 +33,10 @@
 #include "apollo_delay2run.h"
 #include "apollo_message.h"
 
-#include "apollo_lsm6dso.h"
-#include "apollo_ak09918.h"
-#include "apollo_bmp280.h"
-//#include "apollo_pah8011.h"
-
-#include "pah_driver.h"
-#include "pah_hrd_function.h"
+#include "lsm6dso_hal.h"
+#include "bmp280_hal.h"
+#include "ak09918_hal.h"
+#include "pah8011_hal.h"
 
 #include "pb_decode.h"
 #include "pb_encode.h"
@@ -47,229 +44,8 @@
 
 extern volatile msg_link msg_link_quene;
 extern uint8_t amotaStart;
+extern void factory_test(void);
 
-extern uint8_t g_UARTRxBuf[128];
-extern uint8_t g_UARTRxBufLen;
-
-static uint8_t g_bmp280State = 0; // 1: temp, 2: pres, 3: all
-
-extern volatile bool        has_interrupt_button;
-extern volatile bool        has_interrupt_pah;
-extern volatile uint64_t    interrupt_pah_timestamp;
-extern float hr;
-extern int32_t hr_trust_level;
-extern int16_t grade;
-extern uint8_t hr_stat;
-extern uint8_t touch_stat;
-
-//*****************************************************************************
-//
-// Related functions that participate in message management
-//
-//*****************************************************************************
-void get_acc_send_msg(void)
-{
-    float accData[3] = {0};
-
-    if (!lsm6dso_acceleration_get(accData))
-    {
-        send_event_msg(APOLLO_SENSOR_0_EVNT, (uint8_t*)accData);
-        // pr_err("x1=%f,x2=%f,x3=%f\r\n", accData[0], accData[1], accData[2]);
-
-        inform_host();
-        wait_fifo_empty();
-    }
-}
-
-void get_gyro_send_msg(void)
-{
-    float gyroData[3] = {0};
-
-    if (!lsm6dso_angular_get(gyroData))
-    {
-        // pr_err("x1=%4.02f,x2=%4.02f,x3=%4.02f\r\n", gyroData[0], gyroData[1], gyroData[2]);
-        send_event_msg(APOLLO_SENSOR_1_EVNT, (uint8_t*)gyroData);
-
-        inform_host();
-        wait_fifo_empty();
-    }
-}
-
-void get_bmp280_send_msg(void)
-{
-    struct bmp280_status m_statue;
-
-    bmp280_get_status(&m_statue);
-
-    if (m_statue.im_update && m_statue.measuring)
-    {
-        struct bmp280_uncomp_data m_uncomp_data;
-        int32_t temp = 0;
-        uint32_t press;
-        uint8_t ret;
-
-        bmp280_get_uncomp_data(&m_uncomp_data);
-
-        if (g_bmp280State & 0x01) // temperature
-        {
-            bmp280_get_comp_temp_32bit(&temp, m_uncomp_data.uncomp_temp);
-
-            // PR_INFO("%s, temp = %d\r\n", __func__, temp);
-
-            ret = send_event_msg(APOLLO_SENSOR_2_EVNT, (uint8_t*)&temp);
-            if (ret)
-            {
-                PR_ERR("Temperature error");
-            }
-            else
-            {
-                inform_host();
-                wait_fifo_empty();
-            }
-        }
-
-        if (g_bmp280State & 0x02) // pressure
-        {
-            bmp280_get_comp_pres_32bit(&press, m_uncomp_data.uncomp_press);
-            ret = send_event_msg(APOLLO_SENSOR_3_EVNT, (uint8_t*)&press);
-            if (ret)
-            {
-                PR_ERR("Pressure error");
-            }
-            else
-            {
-                inform_host();
-                wait_fifo_empty();
-            }
-        }
-    }
-}
-
-void get_magnet_send_msg(void)
-{
-    if (ak099xx_check_rdy())
-    {
-        int16_t ak_data[3];
-        int16_t ak_st[2];
-        ak099xx_get_data(ak_data, ak_st);
-
-        if (ak_st[1] &= 0x0004)
-        {
-            send_event_msg(APOLLO_SENSOR_4_EVNT, (uint8_t*)ak_data);
-            // pr_err("x1=%d,x2=%d,x3=%d\r\n", ak_data[0], ak_data[1], ak_data[2]);
-            inform_host();
-            wait_fifo_empty();
-        }
-    }
-}
-
-void get_irg_hr_send_msg(void)
-{
-    uint8_t hr_data[10] = {0};
-    /**pah8series_ppg_dri_HRD_task, this function only read ppg data & set raw_data format,
-     * Customer can run this function on interrupt_handler or while loop. */
-    pah8series_ppg_dri_HRD_task(&has_interrupt_pah ,&has_interrupt_button ,&interrupt_pah_timestamp);
-
-    /**hrd_alg_task, this function will run pixart alg, Customer need run this function on
-     * low priority task before next pah8series_ppg_dri_HRD_task() */
-    hrd_alg_task();
-
-    if (hr_stat == MSG_HR_READY)
-    {
-        hr_stat = 0;
-        *(int32_t*)(&hr_data[0]) = hr;
-        *(int32_t*)(&hr_data[4]) = hr_trust_level;
-        *(int16_t*)(&hr_data[8]) = grade;
-        send_event_msg(APOLLO_SENSOR_5_EVNT, (uint8_t*)hr_data);
-        inform_host();
-    }
-}
-
-void get_hr_touch_send_msg(void)
-{
-    pah8series_touch_mode_dri_task(&has_interrupt_pah ,&has_interrupt_button ,&interrupt_pah_timestamp);
-
-    if (touch_stat & 0x10)
-    {
-        touch_stat &= 0x0F;
-        //PR_ERR("Get touch: %d", touch_stat);
-        send_event_msg(APOLLO_SENSOR_8_EVNT, &touch_stat);
-        inform_host();
-    }
-}
-
-void get_step_send_msg(void)
-{
-    uint16_t step;
-    static uint16_t last_steps;
-
-    step = lsm6dso_step_get();
-
-    if (last_steps != step)
-    {
-        PR_INFO("Get step: %d", step);
-        send_event_msg(APOLLO_SENSOR_6_EVNT, (uint8_t*)&step);
-        inform_host();
-        last_steps = step;
-    }
-}
-
-void get_tilt_status_send_msg(void)
-{
-    float accData[3] = {0};
-    static uint8_t lift_wrist_state = 0;
-
-    if (lsm6dso_tilt_status())
-    {
-        if (!lsm6dso_acceleration_get(accData))
-        {
-            if (accData[2] < -860)
-            {
-                if (lift_wrist_state == 0)
-                {
-                    lift_wrist_state = 1;
-                    PR_ERR("Lift the wrist.");
-                    send_event_msg(APOLLO_SENSOR_7_EVNT, (uint8_t*)&lift_wrist_state);
-                    inform_host();
-                }
-            }
-            else if (accData[0] < -920 || accData[0] > 920)
-            {
-                if (lift_wrist_state == 1)
-                {
-                    lift_wrist_state = 0;
-                    PR_ERR("Put down the wrist.");
-                    send_event_msg(APOLLO_SENSOR_7_EVNT, (uint8_t*)&lift_wrist_state);
-                    inform_host();
-                }
-            }
-        }
-    }
-}
-
-static uint8_t strtou8(char* nptr)
-{
-    uint8_t ret;
-
-    if (*nptr < '0' || *nptr > '9')
-        return 0;
-
-    ret = (*nptr - '0') * 10;
-    nptr++;
-
-    if (*nptr < '0' || *nptr > '9')
-        return 0;
-
-    ret += *nptr - '0';
-    return ret;
-}
-
-static void send_test_msg(char* nptr)
-{
-    uart_print("###");
-    uart_print(nptr);
-    uart_print("***\r\n");
-}
 //*****************************************************************************
 //
 // Main
@@ -311,260 +87,31 @@ int main(void)
 
     while(1)
     {
-        // For Factory Test
-        if (g_UARTRxBufLen > 0)
-        {
-            uint32_t i = 0;
-            char* reciveCmd = NULL;
-            char* reciveCmdTail = NULL;
-            uint8_t testCmd;
-            char msgBuf[128];
-            float lsm6dData[3] = {0};
-            int16_t compass_data[3];
-            int16_t compass_st[2];
-
-            // Wait for a frame to complete.
-            am_util_delay_ms(3);
-            reciveCmd = strstr((const char*)g_UARTRxBuf, "###");
-            if (reciveCmd != NULL)
-            {
-                reciveCmdTail = strstr((const char*)g_UARTRxBuf, "***");
-                if (reciveCmdTail != NULL)
-                {
-                    if(reciveCmdTail - reciveCmd == 5)
-                    {
-                        reciveCmd += 3;
-                        *reciveCmdTail = '\0';
-                        testCmd = strtou8(reciveCmd);
-                        switch (testCmd)
-                        {
-                            case 1:
-                                PR_INFO("MCU status test.");
-                                send_test_msg("");
-                                break;
-                            case 2:
-                                PR_INFO("MCU version check.");
-                                am_util_stdio_sprintf(msgBuf,"%02X.%02X.%02X", sw_version[0], APOLLO3_HUB_VER1, APOLLO3_HUB_VER2);
-                                send_test_msg(msgBuf);
-                            case 3:
-                                PR_INFO("Gravity sensor test.");
-                                for (i = 0; i < 800; i++)
-                                {
-                                    if (!lsm6dso_acceleration_get(lsm6dData))
-                                        break;
-                                    am_util_delay_ms(10);
-                                }
-                                if (i == 800)
-                                {
-                                    PR_ERR("Gravity sensor test ERROR.");
-                                    send_test_msg("Gravity sensor failed to pick up data.");
-                                }
-                                else
-                                {
-                                    PR_INFO("Gravity sensor test successed.");
-                                    am_util_stdio_sprintf(msgBuf, "Gravity-value: x = %4.2f, y = %4.2f, z = %4.2f",
-                                            lsm6dData[0], lsm6dData[1], lsm6dData[2]);
-                                    send_test_msg(msgBuf);
-                                }
-                                break;
-                            case 4:
-                                PR_INFO("Gyroscope sensor test.");
-                                for (i = 0; i < 800; i++)
-                                {
-                                    if (!lsm6dso_angular_get(lsm6dData))
-                                        break;
-                                    am_util_delay_ms(10);
-                                }
-                                if (i == 800)
-                                {
-                                    PR_ERR("Gyroscope sensor test ERROR.");
-                                    send_test_msg("Gyroscope sensor failed to pick up data.");
-                                }
-                                else
-                                {
-                                    PR_INFO("Gyroscope sensor test successed.");
-                                    am_util_stdio_sprintf(msgBuf, "Gyroscope-value: x = %4.2f, y = %4.2f, z = %4.2f",
-                                            lsm6dData[0], lsm6dData[1], lsm6dData[2]);
-                                    send_test_msg(msgBuf);
-                                }
-                                break;
-                            case 5:
-                                PR_INFO("Compass sensor test.");
-                                ak099xx_start(10);
-                                for (i = 0; i < 800; i++)
-                                {
-                                    am_util_delay_ms(10);
-                                    ak099xx_get_data(compass_data, compass_st);
-                                    if (compass_st[1] &= 0x0004)
-                                        break;
-                                }
-                                if (i == 800)
-                                {
-                                    PR_ERR("Compass sensor test ERROR.");
-                                    send_test_msg("Compass sensor failed to pick up data.");
-                                }
-                                else
-                                {
-                                    PR_INFO("Compass sensor test successed.");
-                                    am_util_stdio_sprintf(msgBuf, "Compass-value: x = %d, y = %d, z = %d",
-                                            compass_data[0], compass_data[1], compass_data[2]);
-                                    send_test_msg(msgBuf);
-                                }
-                                ak099xx_stop();
-                                break;
-                            case 6:
-                                PR_INFO("Temperature sensor test.");
-                                bmp280_set_power_mode(BMP280_NORMAL_MODE);
-                                for (i = 0; i < 800; i++)
-                                {
-                                    struct bmp280_status m_statue;
-                                    am_util_delay_ms(10);
-                                    bmp280_get_status(&m_statue);
-                                    if (m_statue.im_update && m_statue.measuring)
-                                    {
-                                        struct bmp280_uncomp_data m_uncomp_data;
-                                        int32_t temp = 0;
-
-                                        bmp280_get_uncomp_data(&m_uncomp_data);
-                                        bmp280_get_comp_temp_32bit(&temp, m_uncomp_data.uncomp_temp);
-                                        am_util_stdio_sprintf(msgBuf, "Temperature-value: %d", temp);
-                                        send_test_msg(msgBuf);
-                                        break;
-                                    }
-                                }
-                                if (i == 800)
-                                {
-                                    PR_ERR("Temperature sensor test ERROR.");
-                                    send_test_msg("Temperature sensor failed to pick up data.");
-                                }
-                                bmp280_set_config();
-                                break;
-                            case 7:
-                                PR_INFO("Pressure sensor test.");
-                                bmp280_set_power_mode(BMP280_NORMAL_MODE);
-                                for (i = 0; i < 800; i++)
-                                {
-                                    struct bmp280_status m_statue;
-                                    am_util_delay_ms(10);
-                                    bmp280_get_status(&m_statue);
-                                    if (m_statue.im_update && m_statue.measuring)
-                                    {
-                                        struct bmp280_uncomp_data m_uncomp_data;
-                                        uint32_t press;
-
-                                        bmp280_get_uncomp_data(&m_uncomp_data);
-                                        bmp280_get_comp_pres_32bit(&press, m_uncomp_data.uncomp_press);
-                                        am_util_stdio_sprintf(msgBuf, "Pressure-value: %d", press);
-                                        send_test_msg(msgBuf);
-                                        break;
-                                    }
-                                }
-                                if (i == 800)
-                                {
-                                    PR_ERR("Pressure sensor test ERROR.");
-                                    send_test_msg("Pressure sensor failed to pick up data.");
-                                }
-                                bmp280_set_config();
-                                break;
-                            case 8:
-                                PR_INFO("Heart-Rate sensor test.");
-                                pah8series_ppg_dri_HRD_init();
-                                break;
-
-                            default:
-                                PR_ERR("The test command: %d, does not exist.", testCmd);
-                                send_test_msg("The test command does not exist.");
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        PR_ERR("Command length incorrect.");
-                    }
-                }
-                else
-                {
-                    PR_ERR("Did not receive the correct command tail.");
-                }
-            }
-            else
-            {
-                PR_ERR("Did not receive the correct command header.");
-            }
-            g_UARTRxBufLen = 0;
-        }
+        factory_test();
 
         if (msg_link_quene.front != NULL)
         {
             PR_DBG("Recive msg queue mid: 0x%02x", msg_link_quene.front->mid);
 
-            switch(msg_link_quene.front->mid)
+            switch (msg_link_quene.front->mid)
             {
                 case APOLLO_GET_VERSION_CMD:
                     send_resp_msg_to_host(msg_link_quene.front->mid, 3, sw_version);
-
                     break;
 
                 case APOLLO_FW_UPDATA_CMD:
                     amotas_init();
-                    send_resp_msg(msg_link_quene.front->mid, NULL);
+                    send_resp_msg_to_host(msg_link_quene.front->mid, 0, NULL);
                     break;
 
                 case APOLLO_FW_UPDATA_DATA:
                     distribute_pack(msg_link_quene.front->len, msg_link_quene.front->data, 0);
-                    send_resp_msg(msg_link_quene.front->mid, NULL);
+                    send_resp_msg_to_host(msg_link_quene.front->mid, 0, NULL);
                     break;
 
                 case APOLLO_FW_DATAEND_CMD:
-                    send_resp_msg(msg_link_quene.front->mid, NULL);
                     distribute_pack(0, NULL, 1);
-                    break;
-
-                case APOLLO_SET_DATE_CMD:
-                {
-                    uint16_t* set_year = (uint16_t*)msg_link_quene.front->data;
-                    uint8_t* set_month = msg_link_quene.front->data + 2;
-                    uint8_t* set_day = msg_link_quene.front->data + 3;
-
-                    PR_INFO("SET date: %04d-%02d-%02d", *set_year, *set_month, *set_day);
-
-                    if (1899 > *set_year || *set_year > 2199 || *set_month > 12 || *set_day > 31)
-                    {
-                        PR_ERR("Invalid setting date parameter");
-                        break;
-                    }
-
-                    am_hal_rtc_time_get(&hal_time);
-                    hal_time.ui32Century = ((*set_year / 100) == 20);
-                    hal_time.ui32Year = *set_year % 100;
-                    hal_time.ui32Month = *set_month - 1;
-                    hal_time.ui32DayOfMonth = *set_day;
-                    hal_time.ui32Weekday = am_util_time_computeDayofWeek(*set_year, *set_month, *set_day);
-                    am_hal_rtc_time_set(&hal_time);
-                    send_resp_msg(msg_link_quene.front->mid, NULL);
-                }
-                    break;
-
-                case APOLLO_SET_TIME_CMD:
-                {
-                    uint8_t set_hour = msg_link_quene.front->data[0];
-                    uint8_t set_minute = msg_link_quene.front->data[1];
-                    uint8_t set_sceond = msg_link_quene.front->data[2];
-
-                    PR_ERR("SET time: %02d:%02d:%02d", set_hour, set_minute, set_sceond);
-
-                    if (set_hour > 23 || set_minute > 60 || set_sceond > 60)
-                    {
-                        PR_ERR("Invalid setting time parameter");
-                        break;
-                    }
-
-                    am_hal_rtc_time_get(&hal_time);
-                    hal_time.ui32Hour = set_hour;
-                    hal_time.ui32Minute = set_minute;
-                    hal_time.ui32Second = set_sceond;
-                    am_hal_rtc_time_set(&hal_time);
-                }
+                    send_resp_msg_to_host(msg_link_quene.front->mid, 0, NULL);
                     break;
 
                 case APOLLO_ACC_CALI_CMD:
@@ -575,19 +122,23 @@ int main(void)
                     if (ret)
                     {
                         acc_cail[0] = 0xFF;
-                        send_resp_msg(msg_link_quene.front->mid, (uint8_t*)acc_cail);
+
+                        send_resp_msg_to_host(msg_link_quene.front->mid, 3, (uint8_t *)(&acc_cail[0]));
                         break;
                     }
 
                     lsm6dso_get_acc_cali_data((uint8_t*)acc_cail);
-                    send_resp_msg(msg_link_quene.front->mid, (uint8_t*)acc_cail);
-                }
+
+                    send_resp_msg_to_host(msg_link_quene.front->mid, 3, (uint8_t *)(&acc_cail[0]));
+
                     break;
+                }
 
                 case APOLLO_SET_ACC_CALI_CMD:
                     PR_INFO("set cali accel command");
                     lsm6dso_set_acc_cali_data(msg_link_quene.front->data);
-                    send_resp_msg(msg_link_quene.front->mid, NULL);
+
+                    send_resp_msg_to_host(msg_link_quene.front->mid, 0, NULL);
                     break;
 
                 case APOLLO_SET_GNSS_CMD:
@@ -633,6 +184,45 @@ int main(void)
                         send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
                         return -1;
                     }
+
+                    uint16_t set_year = (uint16_t)(userInfo.year);
+                    uint8_t set_month = (uint8_t)(userInfo.month);
+                    uint8_t set_day = (uint8_t)(userInfo.day);
+                    uint8_t set_hour = (uint8_t)(userInfo.hour);
+                    uint8_t set_minute = (uint8_t)(userInfo.minute);
+                    uint8_t set_sceond = (uint8_t)(userInfo.second);
+
+                    PR_INFO("SET date: %04d-%02d-%02d", set_year, set_month, set_day);
+                    PR_INFO("SET time: %02d:%02d:%02d", set_hour, set_minute, set_sceond);
+
+                    if ((1899 > set_year) || (set_year > 2199) || (set_month > 12) || (set_day > 31))
+                    {
+                        PR_ERR("Invalid setting date parameter");
+
+                        status = APOLLO_HUB_RESP_ERROR_DATE_INFO;
+                        send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
+                        break;
+                    }
+
+                    if ((set_hour > 23) || (set_minute > 60) || (set_sceond > 60))
+                    {
+                        PR_ERR("Invalid setting time parameter");
+
+                        status = APOLLO_HUB_RESP_ERROR_TIME_INFO;
+                        send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
+                        break;
+                    }
+
+                    am_hal_rtc_time_get(&hal_time);
+                    hal_time.ui32Century = ((set_year / 100) == 20);
+                    hal_time.ui32Year = set_year % 100;
+                    hal_time.ui32Month = set_month - 1;
+                    hal_time.ui32DayOfMonth = set_day;
+                    hal_time.ui32Weekday = am_util_time_computeDayofWeek(set_year, set_month, set_day);
+                    hal_time.ui32Hour = set_hour;
+                    hal_time.ui32Minute = set_minute;
+                    hal_time.ui32Second = set_sceond;
+                    am_hal_rtc_time_set(&hal_time);
 
                     send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
 
@@ -803,15 +393,18 @@ int main(void)
                     send_resp_msg_to_host(msg_link_quene.front->mid, 2, &payload[0]);
                     break;
                 }
+
+                case APOLLO_SET_STEPCOUNTER_RESET_CMD:
+                    PR_INFO("set APOLLO_SET_STEPCOUNTER_RESET_CMD command");
+                    stepcounter_reset();
+                    send_resp_msg_to_host(msg_link_quene.front->mid, 1, (uint8_t *)&status);
+                    break;
+
                 default:
                     PR_ERR("There is no useful mid: 0x%02x", msg_link_quene.front->mid);
                     break;
-
-                /*case APOLLO_FW_UPDATA_CMD:
-                    amotas_init();
-                    send_resp_msg(msg_link_quene.front->mid, NULL);
-                    break;*/
             }
+
             msg_dequene();
         }
 
@@ -827,6 +420,6 @@ int main(void)
         }
 
         // Go to Deep Sleep.
-        //am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_DEEP);
+        am_hal_sysctrl_sleep(AM_HAL_SYSCTRL_SLEEP_DEEP);
     }
 }

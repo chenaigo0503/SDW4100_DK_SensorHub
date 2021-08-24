@@ -605,6 +605,7 @@ static void log_pah8series_no_touch(void)
 #if defined(ENABLE_PXI_ALG_HRD) && defined(WEAR_INDEX_EN)
 static void log_pah8series_wear_info(void){
     float wear_ratio;
+    wear_ratio = wear_ratio;
     wear_ratio=((float)_state.wIndex_data.Wear_Num/(float)(_state.wIndex_data.Wear_FC_total+1)*100);
 		log_printf("Total frame count %d after Heart Rate release, Wear index trigger num %d. Trigger percentage "LOG_FLOAT_MARKER"\n" \
     , _state.wIndex_data.Wear_FC_total+1, _state.wIndex_data.Wear_Num, LOG_FLOAT(wear_ratio));
@@ -840,6 +841,9 @@ static void pah8011_ae_info_check(pah8series_data_t *pxialg_data, bool Tuning)
     uint16_t Touch_data  = _state.Touch_data;
 
 	int wear_index=0;
+    wear_enable_log = wear_enable_log;
+    Touch_data = Touch_data;
+    
 #if defined(ENABLE_PXI_ALG_HRD)	
 	pah8series_get_wear_index(Expo_time, LEDDAC, 0, &wear_index);
 #ifdef WEAR_INDEX_EN
